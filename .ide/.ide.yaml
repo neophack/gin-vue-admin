@@ -22,6 +22,7 @@ workspace:
       git-config: true
       ssh-key: true
     command:
+      - nvm install 14.18
       - cd web
       - npm config set registry https://registry.npmmirror.com
       - npm install
