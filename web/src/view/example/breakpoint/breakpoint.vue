@@ -8,7 +8,7 @@
           <input v-show="false" id="file" ref="FileInput" multiple="multiple" type="file" @change="choseFile">
         </div>
       </form>
-      <el-button :disabled="limitFileSize" type="primary" size="mini" class="uploadBtn" @click="getFile">上传文件</el-button>
+      <el-button :disabled="limitFileSize" type="primary" class="uploadBtn" @click="getFile">上传文件</el-button>
       <div class="el-upload__tip">请上传不超过5MB的文件</div>
       <div class="list">
         <transition name="list" tag="p">
@@ -140,7 +140,7 @@ const sliceFile = () => {
         })
 }
 
-watch(waitNum, () => { percentage.value = Math.floor(((formDataList.value.length - waitNum.value) / formDataList.value.length) * 100) })
+watch(() => waitNum.value, () => { percentage.value = Math.floor(((formDataList.value.length - waitNum.value) / formDataList.value.length) * 100) })
 
 const upLoadFileSlice = async(item) => {
   // 切片上传

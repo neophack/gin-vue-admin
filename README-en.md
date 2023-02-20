@@ -3,11 +3,11 @@
 <img src="http://qmplusimg.henrongyi.top/gvalogo.jpg" width=300" height="300" />
 </div>
 <div align=center>
-<img src="https://img.shields.io/badge/golang-1.14-blue"/>
-<img src="https://img.shields.io/badge/gin-1.6.3-lightBlue"/>
-<img src="https://img.shields.io/badge/vue-2.6.10-brightgreen"/>
-<img src="https://img.shields.io/badge/element--ui-2.12.0-green"/>
-<img src="https://img.shields.io/badge/gorm-1.20.7-red"/>
+<img src="https://img.shields.io/badge/golang-1.16-blue"/>
+<img src="https://img.shields.io/badge/gin-1.7.0-lightBlue"/>
+<img src="https://img.shields.io/badge/vue-3.2.25-brightgreen"/>
+<img src="https://img.shields.io/badge/element--plus-2.0.1-green"/>
+<img src="https://img.shields.io/badge/gorm-1.22.5-red"/>
 </div>
 
 English | [简体中文](./README.md)
@@ -25,7 +25,7 @@ English | [简体中文](./README.md)
 
 [From the environment to the deployment of teaching videos](https://www.bilibili.com/video/BV1fV411y7dT)
 
-[Development Steps](https://www.gin-vue-admin.com/docs/help) (Contributor:  <a href="https://github.com/LLemonGreen">LLemonGreen</a> And <a href="https://github.com/fkk0509">Fann</a>)
+[Development Steps](https://www.gin-vue-admin.com/guide/start-quickly/env.html) (Contributor:  <a href="https://github.com/LLemonGreen">LLemonGreen</a> And <a href="https://github.com/fkk0509">Fann</a>)
 
 ## 1. Basic Introduction
 
@@ -322,7 +322,7 @@ More detailed instructions, please refer to  [SmartIDE README](.ide/README-en.md
 |  :---:  | 
 | <img width="150" src="http://qmplusimg.henrongyi.top/qrjjz.png"> 
 
-#### [About Us](https://www.gin-vue-admin.com/about/)
+#### [About Us](https://www.gin-vue-admin.com/about/join.html)
 
 ## 9. Contributors
 
@@ -334,7 +334,7 @@ Thank you for considering your contribution to gin-vue-admin!
 
 ## 10. Donate
 
-If you find this project useful, you can buy author a glass of juice :tropical_drink: [here](https://www.gin-vue-admin.com/docs/coffee)
+If you find this project useful, you can buy author a glass of juice :tropical_drink: [here](https://www.gin-vue-admin.com/coffee/index.html)
 
 ## 11. Commercial considerations
 

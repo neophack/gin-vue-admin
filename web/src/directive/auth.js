@@ -23,18 +23,16 @@ export default {
             break
         }
         if (type === '') {
-          /* eslint-disable */
-              console.error("v-auth必须是Array,Number,String属性,暂不支持其他属性")
-              /* eslint-enable */
+          el.parentNode.removeChild(el)
           return
         }
         const waitUse = binding.value.toString().split(',')
-        let flag = waitUse.some(item => item === userInfo.authorityId)
+        let flag = waitUse.some(item => Number(item) === userInfo.authorityId)
         if (binding.modifiers.not) {
           flag = !flag
         }
         if (!flag) {
-          el.style.display = 'none'
+          el.parentNode.removeChild(el)
         }
       }
     })

@@ -1,103 +1,94 @@
 <template>
   <div id="userLayout">
-    <div class="login_panle">
-      <div class="login_panle_form">
-        <div class="login_panle_form_title">
+    <div class="login_panel">
+      <div class="login_panel_form">
+        <div class="login_panel_form_title">
           <img
-            class="login_panle_form_title_logo"
+            class="login_panel_form_title_logo"
             :src="$GIN_VUE_ADMIN.appLogo"
             alt
           >
-          <p class="login_panle_form_title_p">{{ $GIN_VUE_ADMIN.appName }}</p>
+          <p class="login_panel_form_title_p">{{ $GIN_VUE_ADMIN.appName }}</p>
         </div>
         <el-form
           ref="loginForm"
           :model="loginFormData"
           :rules="rules"
+          :validate-on-rule-change="false"
           @keyup.enter="submitForm"
         >
           <el-form-item prop="username">
             <el-input
               v-model="loginFormData.username"
+              size="large"
               placeholder="请输入用户名"
-            >
-              <template #suffix>
-                <span class="input-icon">
-                  <el-icon>
-                    <user />
-                  </el-icon>
-                </span>
-              </template>
-            </el-input>
+              suffix-icon="user"
+            />
           </el-form-item>
           <el-form-item prop="password">
             <el-input
               v-model="loginFormData.password"
-              :type="lock === 'lock' ? 'password' : 'text'"
+              show-password
+              size="large"
+              type="password"
               placeholder="请输入密码"
-            >
-              <template #suffix>
-                <span class="input-icon">
-                  <el-icon>
-                    <component
-                      :is="lock"
-                      @click="changeLock"
-                    />
-                  </el-icon>
-                </span>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item style="position: relative" prop="captcha">
-            <el-input
-              v-model="loginFormData.captcha"
-              placeholder="请输入验证码"
-              style="width: 60%"
             />
-            <div class="vPic">
-              <img
-                v-if="picPath"
-                :src="picPath"
-                alt="请输入验证码"
-                @click="loginVerify()"
-              >
+          </el-form-item>
+          <el-form-item v-if="loginFormData.openCaptcha" prop="captcha">
+            <div class="vPicBox">
+              <el-input
+                v-model="loginFormData.captcha"
+                placeholder="请输入验证码"
+                size="large"
+                style="flex:1;padding-right: 20px;"
+              />
+              <div class="vPic">
+                <img
+                  v-if="picPath"
+                  :src="picPath"
+                  alt="请输入验证码"
+                  @click="loginVerify()"
+                >
+              </div>
             </div>
           </el-form-item>
           <el-form-item>
             <el-button
               type="primary"
               style="width: 46%"
+              size="large"
               @click="checkInit"
             >前往初始化</el-button>
             <el-button
               type="primary"
+              size="large"
               style="width: 46%; margin-left: 8%"
               @click="submitForm"
             >登 录</el-button>
           </el-form-item>
         </el-form>
       </div>
-      <div class="login_panle_right" />
-      <div class="login_panle_foot">
+      <div class="login_panel_right" />
+      <div class="login_panel_foot">
         <div class="links">
           <a href="http://doc.henrongyi.top/" target="_blank">
-            <img src="@/assets/docs.png" class="link-icon">
+            <img src="@/assets/docs.png" class="link-icon" alt="文档">
           </a>
           <a href="https://support.qq.com/product/371961" target="_blank">
-            <img src="@/assets/kefu.png" class="link-icon">
+            <img src="@/assets/kefu.png" class="link-icon" alt="客服">
           </a>
           <a
             href="https://github.com/flipped-aurora/gin-vue-admin"
             target="_blank"
           >
-            <img src="@/assets/github.png" class="link-icon">
+            <img src="@/assets/github.png" class="link-icon" alt="github">
           </a>
           <a href="https://space.bilibili.com/322210472" target="_blank">
-            <img src="@/assets/video.png" class="link-icon">
+            <img src="@/assets/video.png" class="link-icon" alt="视频站">
           </a>
         </div>
         <div class="copyright">
-          <bootomInfo />
+          <BottomInfo />
         </div>
       </div>
     </div>
@@ -113,7 +104,7 @@ export default {
 <script setup>
 import { captcha } from '@/api/user'
 import { checkDB } from '@/api/initdb'
-import bootomInfo from '@/view/layout/bottomInfo/bottomInfo.vue'
+import BottomInfo from '@/view/layout/bottomInfo/bottomInfo.vue'
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
@@ -137,21 +128,21 @@ const checkPassword = (rule, value, callback) => {
 
 // 获取验证码
 const loginVerify = () => {
-  captcha({}).then((ele) => {
-    rules.captcha[1].max = ele.data.captchaLength
-    rules.captcha[1].min = ele.data.captchaLength
+  captcha({}).then(async(ele) => {
+    rules.captcha.push({
+      max: ele.data.captchaLength,
+      min: ele.data.captchaLength,
+      message: `请输入${ele.data.captchaLength}位验证码`,
+      trigger: 'blur',
+    })
     picPath.value = ele.data.picPath
     loginFormData.captchaId = ele.data.captchaId
+    loginFormData.openCaptcha = ele.data.openCaptcha
   })
 }
 loginVerify()
 
 // 登录相关操作
-const lock = ref('lock')
-const changeLock = () => {
-  lock.value = lock.value === 'lock' ? 'unlock' : 'lock'
-}
-
 const loginForm = ref(null)
 const picPath = ref('')
 const loginFormData = reactive({
@@ -159,12 +150,12 @@ const loginFormData = reactive({
   password: '123456',
   captcha: '',
   captchaId: '',
+  openCaptcha: false,
 })
 const rules = reactive({
   username: [{ validator: checkUsername, trigger: 'blur' }],
   password: [{ validator: checkPassword, trigger: 'blur' }],
   captcha: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
     {
       message: '验证码格式不正确',
       trigger: 'blur',

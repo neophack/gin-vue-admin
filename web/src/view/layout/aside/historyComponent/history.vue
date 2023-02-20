@@ -18,6 +18,7 @@
       >
         <template #label>
           <span
+            :tab="item"
             :style="{
               color: activeValue === name(item) ? userStore.activeColor : '#333',
             }"
@@ -28,7 +29,7 @@
                  activeValue === name(item) ? userStore.activeColor : '#ddd',
              }"
            />
-            {{ item.meta.title }}</span>
+            {{ fmtTitle(item.meta.title,item) }}</span>
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -58,6 +59,7 @@ import { emitter } from '@/utils/bus.js'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/pinia/modules/user'
+import { fmtTitle } from '@/utils/fmtRouterTitle'
 
 const route = useRoute()
 const router = useRouter()
@@ -110,7 +112,7 @@ const openContextMenu = (e) => {
     }
     left.value = e.clientX - width
     top.value = e.clientY + 10
-    rightActive.value = id.split('-')[1]
+    rightActive.value = id.substring(4)
   }
 }
 const closeAll = () => {
@@ -177,6 +179,9 @@ const isSame = (route1, route2) => {
   if (route1.name !== route2.name) {
     return false
   }
+  if (Object.keys(route1.query).length !== Object.keys(route2.query).length || Object.keys(route1.params).length !== Object.keys(route2.params).length) {
+    return false
+  }
   for (const key in route1.query) {
     if (route1.query[key] !== route2.query[key]) {
       return false
@@ -193,15 +198,21 @@ const setTab = (route) => {
   if (!historys.value.some((item) => isSame(item, route))) {
     const obj = {}
     obj.name = route.name
-    obj.meta = route.meta
+    obj.meta = { ...route.meta }
+    delete obj.meta.matched
     obj.query = route.query
     obj.params = route.params
     historys.value.push(obj)
   }
   window.sessionStorage.setItem('activeValue', getFmtString(route))
 }
-const changeTab = (component) => {
-  const tab = component.instance.attrs.tab
+
+const historyMap = ref({})
+
+const changeTab = (TabsPaneContext) => {
+  const name = TabsPaneContext?.props?.name
+  if (!name) return
+  const tab = historyMap.value[name]
   router.push({
     name: tab.name,
     query: tab.query,
@@ -234,7 +245,7 @@ const removeTab = (tab) => {
   historys.value.splice(index, 1)
 }
 
-watch(contextMenuVisible, () => {
+watch(() => contextMenuVisible.value, () => {
   if (contextMenuVisible.value) {
     document.body.addEventListener('click', () => {
       contextMenuVisible.value = false
@@ -246,17 +257,25 @@ watch(contextMenuVisible, () => {
   }
 })
 
-watch(route, (to, now) => {
-  if (to.name === 'Login') {
+watch(() => route, (to, now) => {
+  if (to.name === 'Login' || to.name === 'Reload') {
     return
   }
   historys.value = historys.value.filter((item) => !item.meta.closeTab)
   setTab(to)
   sessionStorage.setItem('historys', JSON.stringify(historys.value))
   activeValue.value = window.sessionStorage.getItem('activeValue')
-  if (now && to && now.name === to.name) {
-    emitter.emit('reload')
-  }
+}, { deep: true })
+
+watch(() => historys.value, () => {
+  sessionStorage.setItem('historys', JSON.stringify(historys.value))
+  historyMap.value = {}
+  historys.value.forEach((item) => {
+    historyMap.value[getFmtString(item)] = item
+  })
+  emitter.emit('setKeepAlive', historys.value)
+}, {
+  deep: true
 })
 
 const initPage = () => {
@@ -292,6 +311,10 @@ const initPage = () => {
     activeValue.value = window.sessionStorage.getItem('activeValue')
   }
   setTab(route)
+  if (window.sessionStorage.getItem('needCloseAll') === 'true') {
+    closeAll()
+    window.sessionStorage.removeItem('needCloseAll')
+  }
 }
 initPage()
 

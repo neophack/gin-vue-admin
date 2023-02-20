@@ -16,12 +16,14 @@ type BaseMenuService struct{}
 //@param: id float64
 //@return: err error
 
-func (baseMenuService *BaseMenuService) DeleteBaseMenu(id float64) (err error) {
-	err = global.GVA_DB.Preload("Parameters").Where("parent_id = ?", id).First(&system.SysBaseMenu{}).Error
+func (baseMenuService *BaseMenuService) DeleteBaseMenu(id int) (err error) {
+	err = global.GVA_DB.Preload("MenuBtn").Preload("Parameters").Where("parent_id = ?", id).First(&system.SysBaseMenu{}).Error
 	if err != nil {
 		var menu system.SysBaseMenu
 		db := global.GVA_DB.Preload("SysAuthoritys").Where("id = ?", id).First(&menu).Delete(&menu)
 		err = global.GVA_DB.Delete(&system.SysBaseMenuParameter{}, "sys_base_menu_id = ?", id).Error
+		err = global.GVA_DB.Delete(&system.SysBaseMenuBtn{}, "sys_base_menu_id = ?", id).Error
+		err = global.GVA_DB.Delete(&system.SysAuthorityBtn{}, "sys_menu_id = ?", id).Error
 		if err != nil {
 			return err
 		}
@@ -57,6 +59,7 @@ func (baseMenuService *BaseMenuService) UpdateBaseMenu(menu system.SysBaseMenu) 
 	upDateMap["hidden"] = menu.Hidden
 	upDateMap["component"] = menu.Component
 	upDateMap["title"] = menu.Title
+	upDateMap["active_name"] = menu.ActiveName
 	upDateMap["icon"] = menu.Icon
 	upDateMap["sort"] = menu.Sort
 
@@ -73,11 +76,27 @@ func (baseMenuService *BaseMenuService) UpdateBaseMenu(menu system.SysBaseMenu) 
 			global.GVA_LOG.Debug(txErr.Error())
 			return txErr
 		}
+		txErr = tx.Unscoped().Delete(&system.SysBaseMenuBtn{}, "sys_base_menu_id = ?", menu.ID).Error
+		if txErr != nil {
+			global.GVA_LOG.Debug(txErr.Error())
+			return txErr
+		}
 		if len(menu.Parameters) > 0 {
 			for k := range menu.Parameters {
 				menu.Parameters[k].SysBaseMenuID = menu.ID
 			}
 			txErr = tx.Create(&menu.Parameters).Error
+			if txErr != nil {
+				global.GVA_LOG.Debug(txErr.Error())
+				return txErr
+			}
+		}
+
+		if len(menu.MenuBtn) > 0 {
+			for k := range menu.MenuBtn {
+				menu.MenuBtn[k].SysBaseMenuID = menu.ID
+			}
+			txErr = tx.Create(&menu.MenuBtn).Error
 			if txErr != nil {
 				global.GVA_LOG.Debug(txErr.Error())
 				return txErr
@@ -98,9 +117,9 @@ func (baseMenuService *BaseMenuService) UpdateBaseMenu(menu system.SysBaseMenu) 
 //@function: GetBaseMenuById
 //@description: 返回当前选中menu
 //@param: id float64
-//@return: err error, menu model.SysBaseMenu
+//@return: menu system.SysBaseMenu, err error
 
-func (baseMenuService *BaseMenuService) GetBaseMenuById(id float64) (err error, menu system.SysBaseMenu) {
-	err = global.GVA_DB.Preload("Parameters").Where("id = ?", id).First(&menu).Error
+func (baseMenuService *BaseMenuService) GetBaseMenuById(id int) (menu system.SysBaseMenu, err error) {
+	err = global.GVA_DB.Preload("MenuBtn").Preload("Parameters").Where("id = ?", id).First(&menu).Error
 	return
 }

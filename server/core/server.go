@@ -15,7 +15,7 @@ type server interface {
 }
 
 func RunWindowsServer() {
-	if global.GVA_CONFIG.System.UseMultipoint {
+	if global.GVA_CONFIG.System.UseMultipoint || global.GVA_CONFIG.System.UseRedis {
 		// 初始化redis服务
 		initialize.Redis()
 	}
@@ -26,7 +26,6 @@ func RunWindowsServer() {
 	}
 
 	Router := initialize.Routers()
-
 	Router.Static("/form-generator", "./resource/page")
 
 	address := fmt.Sprintf(":%d", global.GVA_CONFIG.System.Addr)
@@ -37,13 +36,14 @@ func RunWindowsServer() {
 	global.GVA_LOG.Info("server run success on ", zap.String("address", address))
 
 	fmt.Printf(`
-	欢迎使用 github.com/flipped-aurora/gin-vue-admin/server
-	当前版本:V2.5.0 beta
+	欢迎使用 gin-vue-admin
+	当前版本:v2.5.5
     加群方式:微信号：shouzi_1994 QQ群：622360840
+	插件市场:https://plugin.gin-vue-admin.com
 	GVA讨论社区:https://support.qq.com/products/371961
 	默认自动化文档地址:http://127.0.0.1%s/swagger/index.html
 	默认前端文件运行地址:http://127.0.0.1:8080
-	如果项目让您获得了收益，希望您能请团队喝杯可乐:https://www.github.com/flipped-aurora/gin-vue-admin/server.com/docs/coffee
+	如果项目让您获得了收益，希望您能请团队喝杯可乐:https://www.gin-vue-admin.com/coffee/index.html
 `, address)
 	global.GVA_LOG.Error(s.ListenAndServe().Error())
 }

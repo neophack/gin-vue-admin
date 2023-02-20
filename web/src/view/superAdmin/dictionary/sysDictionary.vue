@@ -22,13 +22,13 @@
         </el-form-item>
         <el-form-item>
           <el-button
-            size="mini"
+
             type="primary"
             icon="search"
             @click="onSubmit"
           >查询</el-button>
           <el-button
-            size="mini"
+
             icon="refresh"
             @click="onReset"
           >重置</el-button>
@@ -38,7 +38,7 @@
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <el-button
-          size="mini"
+
           type="primary"
           icon="plus"
           @click="openDialog"
@@ -83,41 +83,46 @@
         <el-table-column align="left" label="按钮组">
           <template #default="scope">
             <el-button
-              size="mini"
+
               icon="document"
-              type="text"
-              @click="toDetile(scope.row)"
+              type="primary"
+              link
+              @click="toDetail(scope.row)"
             >详情</el-button>
             <el-button
-              size="mini"
+
               icon="edit"
-              type="text"
+              type="primary"
+              link
               @click="updateSysDictionaryFunc(scope.row)"
             >变更</el-button>
             <el-popover
-              v-model:visible="scope.row.visible"
+              v-model="scope.row.visible"
               placement="top"
               width="160"
             >
               <p>确定要删除吗？</p>
               <div style="text-align: right; margin-top: 8px">
                 <el-button
-                  size="mini"
-                  type="text"
+
+                  type="primary"
+                  link
                   @click="scope.row.visible = false"
                 >取消</el-button>
                 <el-button
                   type="primary"
-                  size="mini"
+
                   @click="deleteSysDictionaryFunc(scope.row)"
                 >确定</el-button>
               </div>
               <template #reference>
                 <el-button
-                  type="text"
+                  type="primary"
+                  link
                   icon="delete"
-                  size="mini"
+
                   style="margin-left: 10px"
+                  @click="scope.row.visible = true"
                 >删除</el-button>
               </template>
             </el-popover>
@@ -146,7 +151,6 @@
         ref="dialogForm"
         :model="formData"
         :rules="rules"
-        size="medium"
         label-width="110px"
       >
         <el-form-item label="字典名（中）" prop="name">
@@ -183,9 +187,9 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button size="small" @click="closeDialog">取 消</el-button>
+          <el-button @click="closeDialog">取 消</el-button>
           <el-button
-            size="small"
+
             type="primary"
             @click="enterDialog"
           >确 定</el-button>
@@ -208,8 +212,8 @@ import {
   updateSysDictionary,
   findSysDictionary,
   getSysDictionaryList,
-} from '@/api/sysDictionary' //  此处请自行替换地址
-import warningBar from '@/components/warningBar/warningBar.vue'
+} from '@/api/sysDictionary' // 此处请自行替换地址
+import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -295,7 +299,7 @@ const getTableData = async() => {
 
 getTableData()
 
-const toDetile = (row) => {
+const toDetail = (row) => {
   router.push({
     name: 'dictionaryDetail',
     params: {
@@ -307,7 +311,7 @@ const toDetile = (row) => {
 const dialogFormVisible = ref(false)
 const type = ref('')
 const updateSysDictionaryFunc = async(row) => {
-  const res = await findSysDictionary({ ID: row.ID })
+  const res = await findSysDictionary({ ID: row.ID, status: row.status })
   type.value = 'update'
   if (res.code === 0) {
     formData.value = res.data.resysDictionary
@@ -355,6 +359,7 @@ const enterDialog = async() => {
         break
     }
     if (res.code === 0) {
+      ElMessage.success('操作成功')
       closeDialog()
       getTableData()
     }

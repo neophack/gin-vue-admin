@@ -1,15 +1,17 @@
 <template>
   <div>
-    <div class="clearflex" style="margin:18px">
-      <el-button class="fl-right" size="mini" type="primary" @click="authDataEnter">确 定</el-button>
-      <el-button class="fl-left" size="mini" type="primary" @click="all">全选</el-button>
-      <el-button class="fl-left" size="mini" type="primary" @click="self">本角色</el-button>
-      <el-button class="fl-left" size="mini" type="primary" @click="selfAndChildren">本角色及子角色</el-button>
+    <warning-bar title="此功能仅用于创建角色和角色的many2many关系表，具体使用还须自己结合表实现业务，详情参考示例代码（客户示例）。此功能不建议使用，建议使用插件市场【组织管理功能（点击前往）】来管理资源权限。" href="https://plugin.gin-vue-admin.com/#/layout/newPluginInfo?id=36" />
+    <div class="clearfix sticky-button" style="margin: 18px">
+      <el-button class="fl-right" type="primary" @click="authDataEnter">确 定</el-button>
+      <el-button class="fl-left" type="primary" @click="all">全选</el-button>
+      <el-button class="fl-left" type="primary" @click="self">本角色</el-button>
+      <el-button class="fl-left" type="primary" @click="selfAndChildren">本角色及子角色</el-button>
     </div>
-    <el-checkbox-group v-model="dataAuthorityId" @change="selectAuthority">
-      <el-checkbox v-for="(item,key) in authoritys" :key="key" :label="item">{{ item.authorityName }}</el-checkbox>
-    </el-checkbox-group>
-    <warning-bar title="此功能仅用于创建角色和角色的many2many关系表，具体使用还须自己结合表实现业务，详情参考示例代码（客户示例）" />
+    <div class="tree-content">
+      <el-checkbox-group v-model="dataAuthorityId" @change="selectAuthority">
+        <el-checkbox v-for="(item,key) in authoritys" :key="key" :label="item">{{ item.authorityName }}</el-checkbox>
+      </el-checkbox-group>
+    </div>
   </div>
 </template>
 
@@ -21,7 +23,7 @@ export default {
 
 <script setup>
 import { setDataAuthority } from '@/api/authority'
-import warningBar from '@/components/warningBar/warningBar.vue'
+import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 const props = defineProps({

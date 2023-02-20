@@ -26,7 +26,7 @@
             <div class="user-personality">
               <p v-if="!editFlag" class="nickName">
                 {{ userStore.userInfo.nickName }}
-                <el-icon class="pointer" color="#66b1ff" @click="openEidt">
+                <el-icon class="pointer" color="#66b1ff" @click="openEdit">
                   <edit />
                 </el-icon>
               </p>
@@ -94,15 +94,15 @@
                 <li>
                   <p class="title">密保手机</p>
                   <p class="desc">
-                    已绑定手机:1245678910
-                    <a href="javascript:void(0)">立即修改</a>
+                    已绑定手机:{{ userStore.userInfo.phone }}
+                    <a href="javascript:void(0)" @click="changePhoneFlag = true">立即修改</a>
                   </p>
                 </li>
                 <li>
                   <p class="title">密保邮箱</p>
                   <p class="desc">
-                    已绑定邮箱：gin-vue-admin@google.com.cn
-                    <a href="javascript:void(0)">立即修改</a>
+                    已绑定邮箱：{{ userStore.userInfo.email }}
+                    <a href="javascript:void(0)" @click="changeEmailFlag = true">立即修改</a>
                   </p>
                 </li>
                 <li>
@@ -156,15 +156,69 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button
-            size="small"
+
             @click="showPassword = false"
           >取 消</el-button>
           <el-button
-            size="small"
+
             type="primary"
             @click="savePassword"
           >确 定</el-button>
         </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="changePhoneFlag" title="绑定手机" width="600px">
+      <el-form :model="phoneForm">
+        <el-form-item label="手机号" label-width="120px">
+          <el-input v-model="phoneForm.phone" placeholder="请输入手机号" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="验证码" label-width="120px">
+          <div class="code-box">
+            <el-input v-model="phoneForm.code" autocomplete="off" placeholder="请自行设计短信服务，此处为模拟随便写" style="width:300px" />
+            <el-button type="primary" :disabled="time>0" @click="getCode">{{ time>0?`(${time}s)后重新获取`:'获取验证码' }}</el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button
+
+            @click="closeChangePhone"
+          >取消</el-button>
+          <el-button
+            type="primary"
+
+            @click="changePhone"
+          >更改</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="changeEmailFlag" title="绑定邮箱" width="600px">
+      <el-form :model="emailForm">
+        <el-form-item label="邮箱" label-width="120px">
+          <el-input v-model="emailForm.email" placeholder="请输入邮箱" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="验证码" label-width="120px">
+          <div class="code-box">
+            <el-input v-model="emailForm.code" placeholder="请自行设计邮件服务，此处为模拟随便写" autocomplete="off" style="width:300px" />
+            <el-button type="primary" :disabled="emailTime>0" @click="getEmailCode">{{ emailTime>0?`(${emailTime}s)后重新获取`:'获取验证码' }}</el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button
+
+            @click="closeChangeEmail"
+          >取消</el-button>
+          <el-button
+            type="primary"
+
+            @click="changeEmail"
+          >更改</el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
@@ -183,7 +237,7 @@ import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/pinia/modules/user'
 
-const path = ref(import.meta.env.VITE_BASE_API)
+const path = ref(import.meta.env.VITE_BASE_API + '/')
 const activeName = ref('second')
 const rules = reactive({
   password: [
@@ -220,7 +274,6 @@ const savePassword = async() => {
   modifyPwdForm.value.validate((valid) => {
     if (valid) {
       changePassword({
-        username: userStore.userInfo.userName,
         password: pwdModify.value.password,
         newPassword: pwdModify.value.newPassword,
       }).then((res) => {
@@ -260,7 +313,7 @@ const enterImg = async(url) => {
   }
 }
 
-const openEidt = () => {
+const openEdit = () => {
   nickName.value = userStore.userInfo.nickName
   editFlag.value = true
 }
@@ -288,6 +341,73 @@ const enterEdit = async() => {
 const handleClick = (tab, event) => {
   console.log(tab, event)
 }
+
+const changePhoneFlag = ref(false)
+const time = ref(0)
+const phoneForm = reactive({
+  phone: '',
+  code: ''
+})
+
+const getCode = async() => {
+  time.value = 60
+  let timer = setInterval(() => {
+    time.value--
+    if (time.value <= 0) {
+      clearInterval(timer)
+      timer = null
+    }
+  }, 1000)
+}
+
+const closeChangePhone = () => {
+  changePhoneFlag.value = false
+  phoneForm.phone = ''
+  phoneForm.code = ''
+}
+
+const changePhone = async() => {
+  const res = await setSelfInfo({ phone: phoneForm.phone })
+  if (res.code === 0) {
+    ElMessage.success('修改成功')
+    userStore.ResetUserInfo({ phone: phoneForm.phone })
+    closeChangePhone()
+  }
+}
+
+const changeEmailFlag = ref(false)
+const emailTime = ref(0)
+const emailForm = reactive({
+  email: '',
+  code: ''
+})
+
+const getEmailCode = async() => {
+  emailTime.value = 60
+  let timer = setInterval(() => {
+    emailTime.value--
+    if (emailTime.value <= 0) {
+      clearInterval(timer)
+      timer = null
+    }
+  }, 1000)
+}
+
+const closeChangeEmail = () => {
+  changeEmailFlag.value = false
+  emailForm.email = ''
+  emailForm.code = ''
+}
+
+const changeEmail = async() => {
+  const res = await setSelfInfo({ email: emailForm.email })
+  if (res.code === 0) {
+    ElMessage.success('修改成功')
+    userStore.ResetUserInfo({ email: emailForm.email })
+    closeChangeEmail()
+  }
+}
+
 </script>
 
 <style lang="scss">
@@ -322,6 +442,9 @@ const handleClick = (tab, event) => {
     min-height: calc(90vh - 200px);
     padding: 30px 20px;
     text-align: center;
+    background-color: #fff;
+    border-radius: 8px;
+    flex-shrink: 0;
     .el-avatar {
       border-radius: 50%;
     }
@@ -369,6 +492,9 @@ const handleClick = (tab, event) => {
   }
 }
 .user-addcount {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
   ul {
     li {
       .title {
@@ -386,6 +512,9 @@ const handleClick = (tab, event) => {
         }
       }
       border-bottom: 2px solid #f0f2f5;
+      &:last-child{
+        border-bottom: none;
+      }
     }
   }
 }
@@ -424,5 +553,9 @@ const handleClick = (tab, event) => {
 }
 .pointer {
   cursor: pointer;
+}
+.code-box{
+  display: flex;
+  justify-content: space-between;
 }
 </style>

@@ -1,7 +1,7 @@
 package request
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -17,5 +17,5 @@ type BaseClaims struct {
 	ID          uint
 	Username    string
 	NickName    string
-	AuthorityId string
+	AuthorityId uint
 }

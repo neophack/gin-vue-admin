@@ -2,7 +2,7 @@
   <div>
     <div class="gva-table-box">
       <div class="gva-btn-list">
-        <el-button size="mini" type="primary" icon="plus" @click="goAutoCode(null)">新增</el-button>
+        <el-button type="primary" icon="plus" @click="goAutoCode(null)">新增</el-button>
       </div>
       <el-table :data="tableData">
         <el-table-column
@@ -21,14 +21,14 @@
             <el-tag
               v-if="scope.row.flag"
               type="danger"
-              size="mini"
+
               effect="dark"
             >
               已回滚
             </el-tag>
             <el-tag
               v-else
-              size="mini"
+
               type="success"
               effect="dark"
             >
@@ -36,12 +36,13 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="操作" min-width="180">
+        <el-table-column align="left" label="操作" min-width="240">
           <template #default="scope">
             <div>
-              <el-button size="mini" type="text" :disabled="scope.row.flag === 1" @click="rollbackFunc(scope.row)">回滚</el-button>
-              <el-button size="mini" type="text" @click="goAutoCode(scope.row)">复用</el-button>
-              <el-button size="mini" type="text" @click="deleteRow(scope.row)">删除</el-button>
+              <el-button type="primary" link :disabled="scope.row.flag === 1" @click="rollbackFunc(scope.row,true)">回滚(删表)</el-button>
+              <el-button type="primary" link :disabled="scope.row.flag === 1" @click="rollbackFunc(scope.row,false)">回滚(不删表)</el-button>
+              <el-button type="primary" link @click="goAutoCode(scope.row)">复用</el-button>
+              <el-button type="primary" link @click="deleteRow(scope.row)">删除</el-button>
             </div>
           </template>
         </el-table-column>
@@ -120,18 +121,44 @@ const deleteRow = async(row) => {
     }
   })
 }
-const rollbackFunc = async(row) => {
-  ElMessageBox.confirm('此操作将删除自动创建的文件和api, 是否继续?', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async() => {
-    const res = await rollback({ id: Number(row.ID) })
-    if (res.code === 0) {
-      ElMessage.success('回滚成功')
-      getTableData()
-    }
-  })
+const rollbackFunc = async(row, flag) => {
+  if (flag) {
+    ElMessageBox.confirm(`此操作将删除自动创建的文件和api（会删除表！！！）, 是否继续?`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(async() => {
+      ElMessageBox.confirm(`此操作将删除自动创建的文件和api（会删除表！！！）, 请继续确认！！！`, '会删除表', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async() => {
+        ElMessageBox.confirm(`此操作将删除自动创建的文件和api（会删除表！！！）, 请继续确认！！！`, '会删除表', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(async() => {
+          const res = await rollback({ id: Number(row.ID), deleteTable: flag })
+          if (res.code === 0) {
+            ElMessage.success('回滚成功')
+            getTableData()
+          }
+        })
+      })
+    })
+  } else {
+    ElMessageBox.confirm(`此操作将删除自动创建的文件和api, 是否继续?`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(async() => {
+      const res = await rollback({ id: Number(row.ID), deleteTable: flag })
+      if (res.code === 0) {
+        ElMessage.success('回滚成功')
+        getTableData()
+      }
+    })
+  }
 }
 const goAutoCode = (row) => {
   if (row) {
