@@ -19,6 +19,13 @@ autocode:
   web-api: /api
   web-form: /view
   web-table: /view
+aws-s3:
+  bucket: xxxxx-10005608
+  region: ap-shanghai
+  secret-id: xxxxxxxx
+  secret-key: xxxxxxxx
+  base-url: https://gin.vue.admin
+  path-prefix: github.com/flipped-aurora/gin-vue-admin/server
 captcha:
   key-long: 6
   img-width: 240
@@ -74,7 +81,7 @@ jwt:
   buffer-time: 86400
   expires-time: 604800
   issuer: qmPlus
-  signing-key: 87ba02da-6e9e-44b4-82ef-367dbf8c4275
+  signing-key: 2740bb21-0f9d-4195-86ca-d80853f932a8
 local:
   path: uploads/file
 mysql:
@@ -89,14 +96,14 @@ mysql:
   log-mode: ""
   log-zap: false
 pgsql:
-  path: ""
-  port: ""
-  config: ""
-  db-name: ""
-  username: ""
-  password: ""
-  max-idle-conns: 10
-  max-open-conns: 100
+  path: 172.18.0.5
+  port: "5432"
+  config: sslmode=disable TimeZone=Asia/Shanghai
+  db-name: gva
+  username: root
+  password: Aa@6447985
+  max-idle-conns: 0
+  max-open-conns: 0
   log-mode: ""
   log-zap: false
 qiniu:
@@ -114,42 +121,19 @@ redis:
 system:
   env: public
   addr: 8888
-  db-type: mysql
+  db-type: pgsql
   oss-type: local
   use-multipoint: false
   iplimit-count: 15000
   iplimit-time: 3600
 tencent-cos:
-  bucket: 'xxxxx-10005608'
-  region: 'ap-shanghai'
-  secret-id: 'xxxxxxxx'
-  secret-key: 'xxxxxxxx'
-  base-url: 'https://gin.vue.admin'
-  path-prefix: 'github.com/flipped-aurora/gin-vue-admin/server'
-
-# aws s3 configuration
-aws-s3:
   bucket: xxxxx-10005608
   region: ap-shanghai
   secret-id: xxxxxxxx
   secret-key: xxxxxxxx
   base-url: https://gin.vue.admin
   path-prefix: github.com/flipped-aurora/gin-vue-admin/server
-
-# huawei obs configuration
-hua-wei-obs:
-  path: 'you-path'
-  bucket: 'you-bucket'
-  endpoint: 'you-endpoint'
-  access-key: 'you-access-key'
-  secret-key: 'you-secret-key'
-
-# excel configuration
-excel:
-  dir: './resource/excel/'
-
-# timer task db clear table
-Timer:
+timer:
   start: true
   spec: '@daily'
   detail:

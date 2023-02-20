@@ -8,11 +8,13 @@ workspace:
     ports:
       tools-webide-vscode: 6800
       tools-webide-goland: 8887
-      tools-phpmyadmin: 8090
+      # tools-phpmyadmin: 8090
+      tools-gva-pgadmin: 5050
       tools-ssh: 6822
       apps-gva-service-api: 8888
       apps-gva-web: 8080
-      apps-gva-mysql: 3306
+      # apps-gva-mysql: 3306
+      apps-gva-postgres: 5432
       apps-gva-redis: 6379
 
     ide-type: vscode
@@ -41,6 +43,7 @@ workspace:
         - 8080:8080
       networks:
         - gva-dev-network
+        
     gva-goland-dev:
       container_name: gva-goland-dev
       image: registry.cn-hangzhou.aliyuncs.com/smartide/smartide-jetbrain-goland
@@ -52,44 +55,46 @@ workspace:
       ports:
         - 8888:8888
         - 8887:8887
-      depends_on:
-        - gva-mysql
-        - gva-redis
+      # depends_on:
+      #   # - gva-postgres #gva-mysql
+      #   - gva-redis
       networks:
         - gva-dev-network
     
-    gva-mysql:
-      image: registry.cn-hangzhou.aliyuncs.com/smartide/mysql:8.0.21
-      container_name: gva-mysql
-      command: 
-        - --default-authentication-plugin=mysql_native_password
-        - --character-set-server=utf8mb4
-        - --collation-server=utf8mb4_unicode_ci
-      restart: always
-      ports:
-        - "3306:3306" # host物理直接映射端口为13306
-      expose:
-        - 3306
-      environment:
-        MYSQL_DATABASE: "qmPlus" # 初始化启动时要创建的数据库的名称
-        MYSQL_ROOT_PASSWORD: "Aa@6447985" # root管理员用户密码
-      networks:
-        - gva-dev-network
-    phpmyadmin:
-      container_name: phpmyadmin
-      image: registry.cn-hangzhou.aliyuncs.com/boathouse/phpmyadmin:5.0.4-apache
-      restart: always
-      expose:
-        - 8090
-      ports:
-        - 8090:80
-      environment:
-        PMA_ARBITRARY: "1"
-      networks:
-        - gva-dev-network
+    # gva-mysql:
+    #   image: registry.cn-hangzhou.aliyuncs.com/smartide/mysql:8.0.21
+    #   container_name: gva-mysql
+    #   command: 
+    #     - --default-authentication-plugin=mysql_native_password
+    #     - --character-set-server=utf8mb4
+    #     - --collation-server=utf8mb4_unicode_ci
+    #   restart: always
+    #   ports:
+    #     - "3306:3306" # host物理直接映射端口为13306
+    #   expose:
+    #     - 3306
+    #   environment:
+    #     MYSQL_DATABASE: "qmPlus" # 初始化启动时要创建的数据库的名称
+    #     MYSQL_ROOT_PASSWORD: "Aa@6447985" # root管理员用户密码
+    #   networks:
+    #     - gva-dev-network
+
+    # phpmyadmin:
+    #   container_name: phpmyadmin
+    #   image: registry.cn-hangzhou.aliyuncs.com/boathouse/phpmyadmin:5.0.4-apache
+    #   restart: always
+    #   expose:
+    #     - 8090
+    #   ports:
+    #     - 8090:80
+    #   environment:
+    #     PMA_ARBITRARY: "1"
+    #   networks:
+    #     - gva-dev-network
+
     gva-redis:
-      image: registry.cn-hangzhou.aliyuncs.com/smartide/redis:6.0.6
       container_name: gva-redis
+      image: registry.cn-hangzhou.aliyuncs.com/smartide/redis:6.0.6
       restart: always
       expose:
         - 6379
@@ -97,6 +102,37 @@ workspace:
         - "6379:6379"
       networks:
         - gva-dev-network
+
+    gva-postgres:
+      image: "postgres" # use latest official postgres version
+      container_name: gva-postgres
+      restart: always
+      environment:
+        POSTGRES_USER: "root"
+        POSTGRES_PASSWORD: "Aa@6447985" 
+        POSTGRES_DB: "root"
+      volumes:
+        - ./database-data:/var/lib/postgresql/data/ # persist data even 
+      expose:
+        - 5432
+      ports:
+        - "5432:5432"
+      networks:
+        - gva-dev-network
+
+    gva-pgadmin:
+      image: dpage/pgadmin4:latest
+      container_name: pgadmin_dc
+      restart: always
+      environment: 
+        PGADMIN_DEFAULT_EMAIL: test@test.cn #在此填写pgAdmin登录账户邮箱
+        PGADMIN_DEFAULT_PASSWORD: test #在此填写pgAdmin密码
+      expose:
+        - 80
+      ports:
+        - "5050:80"
+      networks:
+          - gva-dev-network
 
   networks:
     gva-dev-network:
