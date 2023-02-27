@@ -151,6 +151,11 @@ func (i *initApi) InitializeData(ctx context.Context) (context.Context, error) {
 		{ApiGroup: "按钮权限", Method: "POST", Path: "/authorityBtn/setAuthorityBtn", Description: "设置按钮权限"},
 		{ApiGroup: "按钮权限", Method: "POST", Path: "/authorityBtn/getAuthorityBtn", Description: "获取已有按钮权限"},
 		{ApiGroup: "按钮权限", Method: "POST", Path: "/authorityBtn/canRemoveAuthorityBtn", Description: "删除按钮"},
+
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/upload", Description: "文件上传示例"},
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/deleteFile", Description: "删除文件"},
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/editFileName", Description: "文件名或者备注编辑"},
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/getFileList", Description: "获取上传文件列表"},
 	}
 	if err := db.Create(&entities).Error; err != nil {
 		return ctx, errors.Wrap(err, sysModel.SysApi{}.TableName()+"表数据初始化失败!")

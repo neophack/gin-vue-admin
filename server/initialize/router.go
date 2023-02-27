@@ -3,6 +3,7 @@ package initialize
 import (
 	"net/http"
 
+	"github.com/flipped-aurora/gin-vue-admin/server/bindata"
 	"github.com/flipped-aurora/gin-vue-admin/server/docs"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/middleware"
@@ -12,6 +13,13 @@ import (
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
+//HandleIndex return HTML
+func HandleIndex() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		html := bindata.MustAsset("index.html")
+		c.Data(200, "text/html; charset=UTF-8", html)
+	}
+}
 // 初始化总路由
 
 func Routers() *gin.Engine {
@@ -27,7 +35,18 @@ func Routers() *gin.Engine {
 	// Router.Static("/static", "./dist/assets")   // dist里面的静态资源
 	// Router.StaticFile("/", "./dist/index.html") // 前端网页入口页面
 
+	http.Handle("/", http.StripPrefix("/", http.FileServer(bindata.AssetFile())))
+	h := gin.WrapH(http.FileServer(bindata.AssetFile()))
+	Router.GET("/favicon.ico", h)
+	Router.GET("/logo.png", h)
+	Router.GET("/assets/*filepath", h)
+	Router.GET("/gva/*filepath", h)
+	Router.GET("/js/*filepath", h)
+	Router.GET("/", HandleIndex())
+	Router.NoRoute(HandleIndex())
+
 	Router.StaticFS(global.GVA_CONFIG.Local.Path, http.Dir(global.GVA_CONFIG.Local.StorePath)) // 为用户头像和文件提供静态地址
+	//Router.StaticFS(global.GVA_CONFIG.Local.TmpPath, http.Dir(global.GVA_CONFIG.Local.TmpPath))
 	// Router.Use(middleware.LoadTls())  // 如果需要使用https 请打开此中间件 然后前往 core/server.go 将启动模式 更变为 Router.RunTLS("端口","你的cre/pem文件","你的key文件")
 	// 跨域，如需跨域可以打开下面的注释
 	// Router.Use(middleware.Cors()) // 直接放行全部跨域请求

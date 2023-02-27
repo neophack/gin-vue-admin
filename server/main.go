@@ -13,6 +13,10 @@ import (
 //go:generate go mod tidy
 //go:generate go mod download
 
+//go:generate go install -a -v github.com/go-bindata/go-bindata/...@latest
+//go:generate cd ../web/dist && ~/go/bin/go-bindata -fs -o=../../server/bindata/bindata.go -pkg=bindata ./...
+//go:generate go build -gcflags="all=-N -l"
+
 // @title                       Swagger Example API
 // @version                     0.0.1
 // @description                 This is a sample Server pets

@@ -2,7 +2,13 @@ package initialize
 
 import (
 	"fmt"
+	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection"
+	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/config"
+	"io/ioutil"
+	"log"
+	"net/http"
 
+	"encoding/json"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/middleware"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/email"
@@ -20,6 +26,7 @@ func PluginInit(group *gin.RouterGroup, Plugin ...plugin.Plugin) {
 func InstallPlugin(Router *gin.Engine) {
 	PublicGroup := Router.Group("")
 	fmt.Println("无鉴权插件安装==》", PublicGroup)
+
 	PrivateGroup := Router.Group("")
 	fmt.Println("鉴权插件安装==》", PrivateGroup)
 	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
@@ -33,4 +40,22 @@ func InstallPlugin(Router *gin.Engine) {
 		global.GVA_CONFIG.Email.Port,
 		global.GVA_CONFIG.Email.IsSSL,
 	))
+
+	data, err := ioutil.ReadFile("detection-config.json")
+	if nil != err  {
+		log.Fatalln("ReadFile ERROR:", err)
+		return
+	} else {
+		log.Println("ReadFile OK :\r\n", string(data))
+	}
+
+	var detectionConfig []config.ModelConfig
+	err = json.Unmarshal(data, &detectionConfig)
+	if nil != err {
+		log.Fatalln("Unmarshal ERROR:", err)
+		return
+	}
+
+	PluginInit(PrivateGroup, detection.CreateDetectionPlug(detectionConfig))
+	Router.StaticFS(global.GVA_CONFIG.Local.TmpPath, http.Dir(global.GVA_CONFIG.Local.TmpPath))
 }
