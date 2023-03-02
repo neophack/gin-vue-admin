@@ -7,7 +7,7 @@ workspace:
     service-name: gva-vscode-dev
     ports:
       tools-webide-vscode: 6800
-      tools-webide-goland: 8887
+      tools-webide-goland: 5678
       # tools-phpmyadmin: 8090
       tools-gva-pgadmin: 5050
       tools-ssh: 6822
@@ -22,7 +22,8 @@ workspace:
       git-config: true
       ssh-key: true
     command:
-      - nvm install 14.18
+      - nvm install 16.9.1
+      - nvm use 16.9.1
       - cd web
       - npm config set registry https://registry.npmmirror.com
       - npm install
@@ -47,7 +48,7 @@ workspace:
         
     gva-goland-dev:
       container_name: gva-goland-dev
-      image: registry.cn-hangzhou.aliyuncs.com/smartide/smartide-jetbrain-goland
+      image: registry.cn-shenzhen.aliyuncs.com/neoneone/nvcr-jetbrains-goland
       restart: always
       environment:
         TZ: Asia/Shanghai
@@ -55,10 +56,17 @@ workspace:
         - .:/home/project
       ports:
         - 8888:8888
-        - 8887:8887
+        - 5678:5678
       # depends_on:
       #   # - gva-postgres #gva-mysql
       #   - gva-redis
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                count: "all"
+                capabilities: [gpu]
       networks:
         - gva-dev-network
     
@@ -105,7 +113,7 @@ workspace:
         - gva-dev-network
 
     gva-postgres:
-      image: "postgres" # use latest official postgres version
+      image: "postgres:15.2-alpine3.17" # use latest official postgres version
       container_name: gva-postgres
       restart: always
       environment:

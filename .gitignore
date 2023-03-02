@@ -32,3 +32,5 @@ web/pnpm-lock.yaml
 
 server/uploads/*
 *.onnx
+
+database-data/*

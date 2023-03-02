@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/model"
+	"gocv.io/x/gocv/cuda"
 	"image"
 	"image/color"
 	"math"
@@ -20,21 +21,21 @@ var (
 	srcImage       = flag.String("image", "images/face.jpg", "input image")
 )
 
-//func printDevices() {
-//	num := cuda.GetCudaEnabledDeviceCount()
-//	for i := 0; i < num; i++ {
-//		cuda.PrintCudaDeviceInfo(i)
-//	}
-//}
+func printDevices() {
+	num := cuda.GetCudaEnabledDeviceCount()
+	for i := 0; i < num; i++ {
+		cuda.PrintCudaDeviceInfo(i)
+	}
+}
 
 func Yolov5(modelFile string, app string) {
 	flag.Parse()
 
-	//printDevices()
+	printDevices()
 
 	net := gocv.ReadNetFromONNX(modelFile)
-	//net.SetPreferableBackend(gocv.NetBackendCUDA)
-	//net.SetPreferableTarget(gocv.NetTargetCUDA)
+	net.SetPreferableBackend(gocv.NetBackendCUDA)
+	net.SetPreferableTarget(gocv.NetTargetCUDA)
 
 	modelSize := image.Pt(*modelImageSize, *modelImageSize)
 
@@ -54,15 +55,16 @@ func Yolov5(modelFile string, app string) {
 		db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
 		var fileLists []model.DetectionFileUploadAndDownload
 		db = db.Where("app = '" + app + "'")
-		db = db.Where("url_detection = ''")
+		db = db.Where("url_detection = '' or url_detection isnull")
 		err := db.Order("created_at desc").Find(&fileLists).Error
 		if err != nil {
 			panic(err)
 		}
 
-		for j := range fileLists {
-			*srcImage = fileLists[j].Url
-			fmt.Print(fileLists[j].Url)
+		for ii := range fileLists {
+			start0 := time.Now()
+			*srcImage = fileLists[ii].Url
+			fmt.Print(fileLists[ii].Url)
 
 			// detect 100 times
 			resized := gocv.NewMat()
@@ -139,14 +141,15 @@ func Yolov5(modelFile string, app string) {
 			//w.ResizeWindow(modelSize.X, modelSize.Y)
 			//w.IMShow(output)
 			//w.WaitKey(-1)
-			newurl := strings.Replace(fileLists[j].Url, "file", "tmp", 1)
+			newurl := strings.Replace(fileLists[ii].Url, "file", "tmp", 1)
 			gocv.IMWrite(newurl, output)
-			err = db.Where("url = ?", fileLists[j].Url).Update("url_detection", newurl).Error
+			db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
+			err = db.Where("url = ?", fileLists[ii].Url).Update("url_detection", newurl).Error
 			if err != nil {
 				return
 			}
 			end = time.Now()
-			fmt.Println("all cost", end.Sub(start))
+			fmt.Println("all cost", end.Sub(start0))
 			src.Close()
 		}
 		time.Sleep(time.Second)
@@ -159,8 +162,8 @@ func Yolov8seg(modelFile string, app string) {
 	//printDevices()
 
 	net := gocv.ReadNetFromONNX(modelFile)
-	//net.SetPreferableBackend(gocv.NetBackendCUDA)
-	//net.SetPreferableTarget(gocv.NetTargetCUDA)
+	net.SetPreferableBackend(gocv.NetBackendCUDA)
+	net.SetPreferableTarget(gocv.NetTargetCUDA)
 
 	modelSize := image.Pt(*modelImageSize, *modelImageSize)
 
@@ -189,9 +192,10 @@ func Yolov8seg(modelFile string, app string) {
 			continue
 		}
 
-		for j := range fileLists {
-			*srcImage = fileLists[j].Url
-			fmt.Print(fileLists[j].Url)
+		for ii := range fileLists {
+			start0 := time.Now()
+			*srcImage = fileLists[ii].Url
+			fmt.Print(fileLists[ii].Url)
 
 			// detect 100 times
 			resized := gocv.NewMat()
@@ -263,7 +267,7 @@ func Yolov8seg(modelFile string, app string) {
 			goodMaskWeights := [][]float32{}
 
 			output := src.Clone()
-			newurl := strings.Replace(fileLists[j].Url, "file", "tmp", 1)
+			newurl := strings.Replace(fileLists[ii].Url, "file", "tmp", 1)
 			for _, v := range indices {
 				if v < 0 {
 					break
@@ -325,12 +329,13 @@ func Yolov8seg(modelFile string, app string) {
 
 			gocv.IMWrite(newurl, output)
 			//var filet []model.DetectionFileUploadAndDownload
-			err = db.Where("url = ?", fileLists[j].Url).Update("url_detection", newurl).Error
+			db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
+			err = db.Where("url = ?", fileLists[ii].Url).Update("url_detection", newurl).Error
 			if err != nil {
 				return
 			}
 			end = time.Now()
-			fmt.Println("all cost", end.Sub(start))
+			fmt.Println("all cost", end.Sub(start0))
 			src.Close()
 			output.Close()
 		}

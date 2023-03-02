@@ -1,1 +1,1 @@
-[{ "model_path":"last-v5inv8-0223.onnx", "app":"plugin-detection2",  "algorithm":"yolov8seg"},{ "model_path":"yolov5s.onnx", "app":"plugin-detection",  "algorithm":"yolov5"}]
+[{ "model_path":"last-v5inv8-0223.onnx", "app":"plugin-detection",  "algorithm":"yolov8seg"},{ "model_path":"yolov5s.onnx", "app":"plugin-detection2",  "algorithm":"yolov5"}]
