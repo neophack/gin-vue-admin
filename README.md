@@ -1,3 +1,64 @@
+## 开发
+
+安装smartide
+
+在工程目录运行smartide start
+
+6800端口访问vscode
+
+5678端口使用https访问goland
+
+8080端口为项目执行访问端口
+
+8888端口为项目部署访问端口
+
+## 编译
+
+前端：进入web目录，使用
+```shell
+nvm install 16.9.1
+npm install
+npm run build
+```
+后端：进入server目录
+```
+go env -w GO111MODULE=on
+go env -w GOPROXY=https://goproxy.cn,direct
+go mod tidy
+go mod download
+
+go install -a -v github.com/go-bindata/go-bindata/...@latest
+cd ../web/dist && ~/go/bin/go-bindata -fs -o=../../server/bindata/bindata.go -pkg=bindata ./...
+go build
+
+```
+go get 有些包下载不下来的话需要国外网络
+
+## 部署
+启动环境
+```shell
+cd server
+docker-compose up -d
+docker run  --gpus all -v ~/workspace/gin-vue-admin/server/:/workspace --workdir '/workspace' -p 9009:8888 --entrypoint /workspace/server --net=gva-dev-network --name gocvenv registry.cn-shenzhen.aliyuncs.com/neoneone/nvcr-jetbrains-goland:latest #需要编译好
+```
+配置环境
+
+http://127.0.0.1:9009/#/init
+
+配置数据库
+
+```
+pgsql
+服务器：gva-postgres （或使用ip）
+用户名：root
+密码：（根据docker-compose配置密码）
+```
+
+开始使用
+
+http://127.0.0.1:9009
+
+******************************************
 
 <div align=center>
 <img src="http://qmplusimg.henrongyi.top/gvalogo.jpg" width=300" height="300" />

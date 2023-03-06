@@ -15,7 +15,7 @@ import (
 
 //go:generate go install -a -v github.com/go-bindata/go-bindata/...@latest
 //go:generate cd ../web/dist && ~/go/bin/go-bindata -fs -o=../../server/bindata/bindata.go -pkg=bindata ./...
-//go:generate go build -gcflags="all=-N -l"
+//go:generate go build
 
 // @title                       Swagger Example API
 // @version                     0.0.1

@@ -23,7 +23,6 @@ workspace:
       ssh-key: true
     command:
       - nvm install 16.9.1
-      - nvm use 16.9.1
       - cd web
       - npm config set registry https://registry.npmmirror.com
       - npm install
@@ -60,13 +59,6 @@ workspace:
       # depends_on:
       #   # - gva-postgres #gva-mysql
       #   - gva-redis
-      deploy:
-        resources:
-          reservations:
-            devices:
-              - driver: nvidia
-                count: "all"
-                capabilities: [gpu]
       networks:
         - gva-dev-network
     

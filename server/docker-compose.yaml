@@ -1,0 +1,84 @@
+version: "3"
+services:
+  gva-goland-dev:
+    container_name: gin-vue-admin_gva-goland-dev
+    environment:
+      TZ: Asia/Shanghai
+    image: registry.cn-shenzhen.aliyuncs.com/neoneone/nvcr-jetbrains-goland
+    networks:
+    - gva-dev-network
+    ports:
+    - 8888:8888
+    - 5678:5678
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: "all"
+              capabilities: [gpu]
+    volumes:
+    - .:/home/project
+  gva-pgadmin:
+    container_name: gin-vue-admin_pgadmin_dc
+    environment:
+      PGADMIN_DEFAULT_EMAIL: test@test.cn
+      PGADMIN_DEFAULT_PASSWORD: test
+    expose:
+    - "80"
+    image: dpage/pgadmin4:latest
+    networks:
+    - gva-dev-network
+    ports:
+    - 5050:80
+    restart: always
+  gva-postgres:
+    container_name: gin-vue-admin_gva-postgres
+    environment:
+      POSTGRES_DB: root
+      POSTGRES_PASSWORD: Aa@6447985
+      POSTGRES_USER: root
+    expose:
+    - "5432"
+    image: postgres:15.2-alpine3.17
+    networks:
+    - gva-dev-network
+    ports:
+    - 5532:5432
+    restart: always
+    volumes:
+    - ./database-data:/var/lib/postgresql/data/
+  gva-redis:
+    container_name: gin-vue-admin_gva-redis
+    expose:
+    - "6379"
+    image: registry.cn-hangzhou.aliyuncs.com/smartide/redis:6.0.6
+    networks:
+    - gva-dev-network
+    ports:
+    - 6379:6379
+    restart: always
+  gva-vscode-dev:
+    container_name: gin-vue-admin_gva-vscode-dev
+    environment:
+      LOCAL_USER_GID: "1000"
+      LOCAL_USER_PASSWORD: smartide123.@IDE
+      LOCAL_USER_UID: "1000"
+      TZ: Asia/Shanghai
+    image: registry.cn-hangzhou.aliyuncs.com/smartide/smartide-base:latest
+    networks:
+    - gva-dev-network
+    ports:
+    - 6800:3000
+    - "6822:22"
+    - 8000:8000
+    - 8080:8080
+    restart: always
+    volumes:
+    - /home/nn/workspace/gin-vue-admin:/home/project
+    - $HOME/.ssh/id_rsa:/home/smartide/.ssh/id_rsa
+    - $HOME/.ssh/id_rsa.pub:/home/smartide/.ssh/id_rsa.pub
+networks:
+  gva-dev-network:
+    external: true
