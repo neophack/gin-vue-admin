@@ -76,7 +76,7 @@ services:
     - 8080:8080
     restart: always
     volumes:
-    - /home/nn/workspace/gin-vue-admin:/home/project
+    - .:/home/project
     - $HOME/.ssh/id_rsa:/home/smartide/.ssh/id_rsa
     - $HOME/.ssh/id_rsa.pub:/home/smartide/.ssh/id_rsa.pub
 networks:

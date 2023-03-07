@@ -29,6 +29,7 @@ go mod download
 
 go install -a -v github.com/go-bindata/go-bindata/...@latest
 cd ../web/dist && ~/go/bin/go-bindata -fs -o=../../server/bindata/bindata.go -pkg=bindata ./...
+cd ../../server
 go build
 
 ```
@@ -57,6 +58,16 @@ pgsql
 开始使用
 
 http://127.0.0.1:9009
+
+将管理员密码修改，登录后，在右上角个人信息中修改密码
+
+用户注册，角色分配测试用户
+
+菜单设置，设置测试用户只访问demo插件
+
+api设置，设置测试用户只访问demo插件的api
+
+数据库web管理，5050端口（根据docker-compose配置账号密码）
 
 ******************************************
 

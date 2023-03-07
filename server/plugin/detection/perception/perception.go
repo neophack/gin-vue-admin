@@ -22,7 +22,7 @@ var (
 )
 
 func printDevices() {
-	num := cuda.GetCudaEnabledDeviceCount()
+	num := cuda.GetCudaEnabledDeviceCount() 
 	for i := 0; i < num; i++ {
 		cuda.PrintCudaDeviceInfo(i)
 	}
@@ -158,8 +158,9 @@ func Yolov5(modelFile string, app string) {
 
 func Yolov8seg(modelFile string, app string) {
 	flag.Parse()
+	th:=float32(0.1)
 	//maskWeightCn := 1
-	//printDevices()
+	printDevices()
 
 	net := gocv.ReadNetFromONNX(modelFile)
 	net.SetPreferableBackend(gocv.NetBackendCUDA)
@@ -248,7 +249,9 @@ func Yolov8seg(modelFile string, app string) {
 				h := line[3]
 				confs := line[4 : rows-cns1]
 				bestId, bestScore := getBestFromConfs(confs)
-
+				if bestScore<th{
+					continue
+				}
 				scores = append(scores, bestScore)
 				boxes = append(boxes, calculateBoundingBox(src, []float32{x, y, w, h}))
 				resizedBoxes = append(resizedBoxes, image.Rect(int(x-w/2)*cols1/modelSize.X, int(y-h/2)*rows1/modelSize.Y, int(x+w/2)*cols1/modelSize.X, int(y+h/2)*rows1/modelSize.Y))
@@ -258,7 +261,9 @@ func Yolov8seg(modelFile string, app string) {
 			}
 
 			fmt.Println("Do NMS in", len(boxes), "boxes")
-			gocv.NMSBoxes(boxes, scores, 0.25, 0.45, indices)
+			if len(boxes)>1 {
+				gocv.NMSBoxes(boxes, scores, 0.25, 0.45, indices)
+			}
 
 			nmsNumber := 0
 			goodBoxes := []image.Rectangle{}

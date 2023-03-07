@@ -8,7 +8,9 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/perception"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils/upload"
+	"go.uber.org/zap"
 	"mime/multipart"
+	"os"
 	"strings"
 )
 
@@ -119,6 +121,10 @@ func (e *DetectionService) GetFileRecordInfoList(info request.PageInfo) (list in
 func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave string, user string, app string) (file model.DetectionFileUploadAndDownload, err error) {
 	oss := upload.NewOss()
 	filePath, key, uploadErr := oss.UploadFile(header)
+	mkdirErr := os.MkdirAll(global.GVA_CONFIG.Local.TmpPath, os.ModePerm)
+	if mkdirErr != nil {
+		global.GVA_LOG.Error("function os.MkdirAll() Filed", zap.Any("err", mkdirErr.Error()))
+	}
 	if uploadErr != nil {
 		panic(err)
 	}
