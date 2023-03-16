@@ -22,7 +22,7 @@ var (
 )
 
 func printDevices() {
-	num := cuda.GetCudaEnabledDeviceCount() 
+	num := cuda.GetCudaEnabledDeviceCount()
 	for i := 0; i < num; i++ {
 		cuda.PrintCudaDeviceInfo(i)
 	}
@@ -31,11 +31,13 @@ func printDevices() {
 func Yolov5(modelFile string, app string) {
 	flag.Parse()
 
-	printDevices()
+	//printDevices()
 
 	net := gocv.ReadNetFromONNX(modelFile)
 	net.SetPreferableBackend(gocv.NetBackendCUDA)
 	net.SetPreferableTarget(gocv.NetTargetCUDA)
+	//net.SetPreferableBackend(gocv.NetBackendDefault)
+	//net.SetPreferableTarget(gocv.NetTargetCPU)
 
 	modelSize := image.Pt(*modelImageSize, *modelImageSize)
 
@@ -165,6 +167,9 @@ func Yolov8seg(modelFile string, app string) {
 	net := gocv.ReadNetFromONNX(modelFile)
 	net.SetPreferableBackend(gocv.NetBackendCUDA)
 	net.SetPreferableTarget(gocv.NetTargetCUDA)
+	//net.SetPreferableBackend(gocv.NetBackendDefault)
+	//net.SetPreferableTarget(gocv.NetTargetCPU)
+
 
 	modelSize := image.Pt(*modelImageSize, *modelImageSize)
 
@@ -202,7 +207,8 @@ func Yolov8seg(modelFile string, app string) {
 			resized := gocv.NewMat()
 			src := gocv.IMRead(*srcImage, gocv.IMReadColor)
 			letterBox(src, &resized, modelSize)
-
+			newurl := strings.Replace(fileLists[ii].Url, "file", "tmp", 1)
+			//gocv.IMWrite(newurl, resized)
 			blob := gocv.BlobFromImage(resized, 1/255.0, modelSize, gocv.Scalar{}, true, false)
 
 			start := time.Now()
@@ -231,6 +237,8 @@ func Yolov8seg(modelFile string, app string) {
 
 			ptr, _ := outt.DataPtrFloat32()
 			ptr1, _ := outs[1].DataPtrFloat32()
+			//ptr2,_:=blob.DataPtrFloat32()
+			//fmt.Println(ptr1)
 
 			boxes := []image.Rectangle{}
 			resizedBoxes := []image.Rectangle{}
@@ -262,7 +270,7 @@ func Yolov8seg(modelFile string, app string) {
 
 			fmt.Println("Do NMS in", len(boxes), "boxes")
 			if len(boxes)>1 {
-				gocv.NMSBoxes(boxes, scores, 0.25, 0.45, indices)
+				gocv.NMSBoxes(boxes, scores, 0.05, 0.45, indices)
 			}
 
 			nmsNumber := 0
@@ -272,7 +280,7 @@ func Yolov8seg(modelFile string, app string) {
 			goodMaskWeights := [][]float32{}
 
 			output := src.Clone()
-			newurl := strings.Replace(fileLists[ii].Url, "file", "tmp", 1)
+
 			for _, v := range indices {
 				if v < 0 {
 					break
@@ -344,7 +352,7 @@ func Yolov8seg(modelFile string, app string) {
 			src.Close()
 			output.Close()
 		}
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 1)
 	}
 }
 
@@ -372,7 +380,7 @@ func letterBox(src gocv.Mat, dst *gocv.Mat, size image.Point) {
 	gocv.Resize(src, &tmp, newSize, 0, 0, gocv.InterpolationLinear)
 
 	if dst.Cols() != size.X || dst.Rows() != size.Y {
-		dstNew := gocv.NewMatWithSize(size.Y, size.X, src.Type())
+		dstNew := gocv.NewMatWithSizesWithScalar([]int{size.Y, size.X}, src.Type(),gocv.Scalar{114,114,114,114})
 		dstNew.CopyTo(dst)
 	}
 

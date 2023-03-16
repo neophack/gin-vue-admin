@@ -65,7 +65,7 @@
           </template>
         </el-table-column>
         <!-- <el-table-column align="left" label="链接" prop="url" min-width="300" /> -->
-        <el-table-column align="left" label="type" prop="tag" width="100">
+        <el-table-column align="left" label="类型" prop="tag" width="100">
           <template #default="scope">
             <el-tag
               :type="scope.row.tag === 'jpg' ? 'primary' : 'success'"

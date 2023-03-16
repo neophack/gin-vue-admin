@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"os"
 	"strings"
+	"time"
 )
 
 type DetectionService struct{}
@@ -144,6 +145,13 @@ func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave strin
 }
 
 func (e *DetectionService) Dojob() {
+	for{
+		if global.GVA_DB == nil {
+			time.Sleep(time.Second * 10)
+			continue
+		}
+		break
+	}
 	for i := range local.GlobalConfig_.ModelConfig {
 		c := local.GlobalConfig_.ModelConfig[i]
 		if c.Algorithm == "yolov8seg" {
