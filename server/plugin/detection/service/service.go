@@ -145,7 +145,7 @@ func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave strin
 }
 
 func (e *DetectionService) Dojob() {
-	for{
+	for {
 		if global.GVA_DB == nil {
 			time.Sleep(time.Second * 10)
 			continue
@@ -155,9 +155,11 @@ func (e *DetectionService) Dojob() {
 	for i := range local.GlobalConfig_.ModelConfig {
 		c := local.GlobalConfig_.ModelConfig[i]
 		if c.Algorithm == "yolov8seg" {
-			go perception.Yolov8seg(c.ModelPath, c.App)
+			go perception.Yolov8seg(c.ModelPath, c.Width, c.Height, c.App)
+		} else if c.Algorithm == "yolov8" {
+			go perception.Yolov8(c.ModelPath, c.Width, c.Height, c.App)
 		} else if c.Algorithm == "yolov5" {
-			go perception.Yolov5(c.ModelPath, c.App)
+			go perception.Yolov5(c.ModelPath, c.Width, c.Height, c.App)
 		}
 	}
 	//perception.Yolov5("yolov5s.onnx")

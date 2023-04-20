@@ -17,8 +17,8 @@ import (
 
 var (
 	//modelFile      = flag.String("model", "yolov5s.onnx", "model path")
-	modelImageSize = flag.Int("size", 640, "model image size")
-	srcImage       = flag.String("image", "images/face.jpg", "input image")
+	//modelImageSize = flag.Int("size", 800, "model image size")
+	srcImage = flag.String("image", "images/face.jpg", "input image")
 )
 
 func printDevices() {
@@ -28,7 +28,7 @@ func printDevices() {
 	}
 }
 
-func Yolov5(modelFile string, app string) {
+func Yolov5(modelFile string, width int, height int, app string) {
 	flag.Parse()
 
 	//printDevices()
@@ -39,7 +39,7 @@ func Yolov5(modelFile string, app string) {
 	//net.SetPreferableBackend(gocv.NetBackendDefault)
 	//net.SetPreferableTarget(gocv.NetTargetCPU)
 
-	modelSize := image.Pt(*modelImageSize, *modelImageSize)
+	modelSize := image.Pt(width, height)
 
 	unconnectedLayerIds := net.GetUnconnectedOutLayers()
 	layerNames := []string{}
@@ -107,7 +107,7 @@ func Yolov5(modelFile string, app string) {
 				bestScore *= sc
 
 				scores = append(scores, bestScore)
-				boxes = append(boxes, calculateBoundingBox(src, []float32{x, y, w, h}))
+				boxes = append(boxes, calculateBoundingBox(src, []float32{x, y, w, h}, width, height))
 				indices = append(indices, -1)
 				classIndexLists = append(classIndexLists, bestId)
 			}
@@ -158,9 +158,9 @@ func Yolov5(modelFile string, app string) {
 	}
 }
 
-func Yolov8seg(modelFile string, app string) {
+func Yolov8seg(modelFile string, width int, height int, app string) {
 	flag.Parse()
-	th:=float32(0.1)
+	th := float32(0.1)
 	//maskWeightCn := 1
 	printDevices()
 
@@ -170,8 +170,7 @@ func Yolov8seg(modelFile string, app string) {
 	//net.SetPreferableBackend(gocv.NetBackendDefault)
 	//net.SetPreferableTarget(gocv.NetTargetCPU)
 
-
-	modelSize := image.Pt(*modelImageSize, *modelImageSize)
+	modelSize := image.Pt(width, height)
 
 	unconnectedLayerIds := net.GetUnconnectedOutLayers()
 	layerNames := []string{}
@@ -217,8 +216,6 @@ func Yolov8seg(modelFile string, app string) {
 			end := time.Now()
 			fmt.Println("cost", end.Sub(start))
 
-			//}
-
 			sz := outs[0].Size()
 			rows := sz[1]
 			cols := sz[2]
@@ -257,11 +254,11 @@ func Yolov8seg(modelFile string, app string) {
 				h := line[3]
 				confs := line[4 : rows-cns1]
 				bestId, bestScore := getBestFromConfs(confs)
-				if bestScore<th{
+				if bestScore < th {
 					continue
 				}
 				scores = append(scores, bestScore)
-				boxes = append(boxes, calculateBoundingBox(src, []float32{x, y, w, h}))
+				boxes = append(boxes, calculateBoundingBox(src, []float32{x, y, w, h}, width, height))
 				resizedBoxes = append(resizedBoxes, image.Rect(int(x-w/2)*cols1/modelSize.X, int(y-h/2)*rows1/modelSize.Y, int(x+w/2)*cols1/modelSize.X, int(y+h/2)*rows1/modelSize.Y))
 				indices = append(indices, -1)
 				classIndexLists = append(classIndexLists, bestId)
@@ -269,7 +266,7 @@ func Yolov8seg(modelFile string, app string) {
 			}
 
 			fmt.Println("Do NMS in", len(boxes), "boxes")
-			if len(boxes)>1 {
+			if len(boxes) > 1 {
 				gocv.NMSBoxes(boxes, scores, 0.05, 0.45, indices)
 			}
 
@@ -356,6 +353,151 @@ func Yolov8seg(modelFile string, app string) {
 	}
 }
 
+func Yolov8(modelFile string, width int, height int, app string) {
+	flag.Parse()
+	th := float32(0.1)
+	//maskWeightCn := 1
+	printDevices()
+
+	net := gocv.ReadNetFromONNX(modelFile)
+	net.SetPreferableBackend(gocv.NetBackendCUDA)
+	net.SetPreferableTarget(gocv.NetTargetCUDA)
+	//net.SetPreferableBackend(gocv.NetBackendDefault)
+	//net.SetPreferableTarget(gocv.NetTargetCPU)
+
+	modelSize := image.Pt(width, height)
+
+	unconnectedLayerIds := net.GetUnconnectedOutLayers()
+	layerNames := []string{}
+	for _, id := range unconnectedLayerIds {
+		layer := net.GetLayer(id)
+		layerNames = append(layerNames, layer.GetName())
+		//break
+	}
+
+	var outs []gocv.Mat
+	for {
+		if global.GVA_DB == nil {
+			time.Sleep(time.Second * 10)
+			continue
+		}
+		db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
+		var fileLists []model.DetectionFileUploadAndDownload
+		db = db.Where("app = '" + app + "'")
+		db = db.Where("url_detection = '' or url_detection isnull")
+		err := db.Order("created_at desc").Find(&fileLists).Error
+		if err != nil {
+			global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
+		for ii := range fileLists {
+			start0 := time.Now()
+			*srcImage = fileLists[ii].Url
+			fmt.Print(fileLists[ii].Url)
+
+			// detect 100 times
+			resized := gocv.NewMat()
+			src := gocv.IMRead(*srcImage, gocv.IMReadColor)
+			letterBox(src, &resized, modelSize)
+			newurl := strings.Replace(fileLists[ii].Url, "file", "tmp", 1)
+			//gocv.IMWrite(newurl, resized)
+			blob := gocv.BlobFromImage(resized, 1/255.0, modelSize, gocv.Scalar{}, true, false)
+
+			start := time.Now()
+			net.SetInput(blob, "")
+			outs = net.ForwardLayers(layerNames)
+			end := time.Now()
+			fmt.Println("cost", end.Sub(start))
+
+			sz := outs[0].Size()
+			rows := sz[1]
+			cols := sz[2]
+			out0 := outs[0].Reshape(1, rows)
+			outt := out0.T()
+
+			ptr, _ := outt.DataPtrFloat32()
+
+			//ptr2,_:=blob.DataPtrFloat32()
+			//fmt.Println(ptr1)
+
+			boxes := []image.Rectangle{}
+			scores := []float32{}
+			indices := []int{}
+			classIndexLists := []int{}
+
+			for j := 0; j < cols; j++ {
+				i0 := j * rows
+				i1 := j*rows + rows
+				line := ptr[i0:i1]
+				x := line[0]
+				y := line[1]
+				w := line[2]
+				h := line[3]
+				confs := line[4:rows]
+				bestId, bestScore := getBestFromConfs(confs)
+				if bestScore < th {
+					continue
+				}
+				scores = append(scores, bestScore)
+				boxes = append(boxes, calculateBoundingBox(src, []float32{x, y, w, h}, width, height))
+				indices = append(indices, -1)
+				classIndexLists = append(classIndexLists, bestId)
+
+			}
+
+			fmt.Println("Do NMS in", len(boxes), "boxes")
+			if len(boxes) > 1 {
+				gocv.NMSBoxes(boxes, scores, 0.05, 0.45, indices)
+			}
+
+			nmsNumber := 0
+			goodBoxes := []image.Rectangle{}
+			goodScores := []float32{}
+			goodClassIds := []int{}
+
+			output := src.Clone()
+
+			for _, v := range indices {
+				if v < 0 {
+					break
+				} else {
+					nmsNumber++
+					goodBoxes = append(goodBoxes, boxes[v])
+					goodScores = append(goodScores, scores[v])
+					goodClassIds = append(goodClassIds, classIndexLists[v])
+
+					gocv.Rectangle(&output, boxes[v], color.RGBA{0, 255, 0, 255}, 1)
+					gocv.PutText(&output, fmt.Sprintf("yftech_%d:%.02f", classIndexLists[v], scores[v]),
+						boxes[v].Min, gocv.FontHersheySimplex, 0.5, color.RGBA{255, 0, 0, 255}, 1)
+
+				}
+			}
+
+			fmt.Println("After NMS", nmsNumber, "keeped")
+
+			//w := gocv.NewWindow("detected")
+			//w.ResizeWindow(modelSize.X, modelSize.Y)
+			//w.IMShow(output)
+			//w.WaitKey(-1)
+
+			gocv.IMWrite(newurl, output)
+			//var filet []model.DetectionFileUploadAndDownload
+			db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
+			err = db.Where("url = ?", fileLists[ii].Url).Update("url_detection", newurl).Error
+			if err != nil {
+				return
+			}
+			end = time.Now()
+			fmt.Println("all cost", end.Sub(start0))
+			src.Close()
+			output.Close()
+		}
+		time.Sleep(time.Second * 1)
+	}
+}
+
 func sigmoid(x float32) float32 {
 	xx := float32(1 / (1 + math.Exp(-float64(x))))
 	return xx
@@ -380,7 +522,7 @@ func letterBox(src gocv.Mat, dst *gocv.Mat, size image.Point) {
 	gocv.Resize(src, &tmp, newSize, 0, 0, gocv.InterpolationLinear)
 
 	if dst.Cols() != size.X || dst.Rows() != size.Y {
-		dstNew := gocv.NewMatWithSizesWithScalar([]int{size.Y, size.X}, src.Type(),gocv.Scalar{114,114,114,114})
+		dstNew := gocv.NewMatWithSizesWithScalar([]int{size.Y, size.X}, src.Type(), gocv.Scalar{114, 114, 114, 114})
 		dstNew.CopyTo(dst)
 	}
 
@@ -388,22 +530,23 @@ func letterBox(src gocv.Mat, dst *gocv.Mat, size image.Point) {
 
 	regionOfDst := dst.Region(rectOfTmp)
 	tmp.CopyTo(&regionOfDst)
+	//gocv.IMWrite("letter.jpg", *dst)
 }
 
 // calculateBoundingBox calculate the bounding box of the detected object.
-func calculateBoundingBox(frame gocv.Mat, row []float32) image.Rectangle {
+func calculateBoundingBox(frame gocv.Mat, row []float32, width int, height int) image.Rectangle {
 	if len(row) < 4 {
 		return image.Rect(0, 0, 0, 0)
 	}
-	gain := math.Min(float64(640)/float64(frame.Cols()), float64(640)/float64(frame.Rows()))
-	padx := float32(float64(640)-float64(frame.Cols())*gain) / 2
-	pady := float32(float64(640)-float64(frame.Rows())*gain) / 2
+	gain := math.Min(float64(width)/float64(frame.Cols()), float64(height)/float64(frame.Rows()))
+	padx := float32(float64(width)-float64(frame.Cols())*gain) / 2
+	pady := float32(float64(height)-float64(frame.Rows())*gain) / 2
 
 	x, y, w, h := row[0], row[1], row[2], row[3]
 	left := int((x - padx - 0.5*w) / float32(gain))
 	top := int((y - pady - 0.5*h) / float32(gain))
-	width := int(w / float32(gain))
-	height := int(h / float32(gain))
+	widtho := int(w / float32(gain))
+	heighto := int(h / float32(gain))
 
-	return image.Rect(left, top, left+width, top+height)
+	return image.Rect(left, top, left+widtho, top+heighto)
 }

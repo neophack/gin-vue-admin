@@ -136,7 +136,7 @@ oracle:
   log-mode: ""
   log-zap: false
 pgsql:
-  path: 172.18.0.4
+  path: gva-postgres
   port: "5432"
   config: sslmode=disable TimeZone=Asia/Shanghai
   db-name: gva
