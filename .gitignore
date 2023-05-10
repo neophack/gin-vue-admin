@@ -31,7 +31,9 @@ web/.pnpm-debug.log
 web/pnpm-lock.yaml
 
 server/uploads/*
+uploads/*
 *.onnx
 
 database-data/*
 */database-data/*
+log

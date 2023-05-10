@@ -156,6 +156,11 @@ func (i *initApi) InitializeData(ctx context.Context) (context.Context, error) {
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/deleteFile", Description: "删除文件"},
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/editFileName", Description: "文件名或者备注编辑"},
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/getFileList", Description: "获取上传文件列表"},
+
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/newBatch", Description: "newBatch"},
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/getBatchList", Description: "getBatchList"},
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/changeStatus", Description: "changeStatus"},
+		{ApiGroup: "detection", Method: "POST", Path: "/detection/deleteBatch", Description: "deleteBatch"},
 	}
 	if err := db.Create(&entities).Error; err != nil {
 		return ctx, errors.Wrap(err, sysModel.SysApi{}.TableName()+"表数据初始化失败!")

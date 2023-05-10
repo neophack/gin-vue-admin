@@ -39,6 +39,7 @@ func (*Local) UploadFile(file *multipart.FileHeader) (string, string, error) {
 		global.GVA_LOG.Error("function os.MkdirAll() Filed", zap.Any("err", mkdirErr.Error()))
 		return "", "", errors.New("function os.MkdirAll() Filed, err:" + mkdirErr.Error())
 	}
+
 	// 拼接路径和文件名
 	p := global.GVA_CONFIG.Local.StorePath + "/" + filename
 	filepath := global.GVA_CONFIG.Local.Path + "/" + filename

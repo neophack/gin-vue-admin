@@ -1,9 +1,10 @@
 package service
 
 import (
+	"errors"
+	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	local "github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/perception"
@@ -11,6 +12,8 @@ import (
 	"go.uber.org/zap"
 	"mime/multipart"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -52,26 +55,16 @@ func (e *DetectionService) FindFile(id uint) (model.DetectionFileUploadAndDownlo
 
 func (e *DetectionService) DeleteFile(file model.DetectionFileUploadAndDownload) (err error) {
 	var fileFromDb model.DetectionFileUploadAndDownload
-	//fileFromDb, err = e.FindFile(file.ID)
-	//if err != nil {
-	//	return
-	//}
-	//oss := upload.NewOss()
-	//if err = oss.DeleteFile(fileFromDb.Key); err != nil {
-	//	return errors.New("文件删除失败")
-	//}
-
-	db := global.GVA_DB.Model(&system.SysUser{})
-	var user system.SysUser
-	err = db.Where("id = 1").First(&user).Error
+	fileFromDb, err = e.FindFile(file.ID)
 	if err != nil {
 		return
 	}
-	if user.UUID.String() == file.Own {
-		err = global.GVA_DB.Where("id = ?", file.ID).Unscoped().Delete(&file).Error
-	} else {
-		err = global.GVA_DB.Where("id = ?", file.ID).First(&fileFromDb).Update("own", user.UUID.String()).Error
+	oss := upload.NewOss()
+	if err = oss.DeleteFile(fileFromDb.Key); err != nil {
+		return errors.New("文件删除失败")
 	}
+
+	err = global.GVA_DB.Where("id = ?", file.ID).Unscoped().Delete(&file).Error
 
 	return err
 }
@@ -92,24 +85,29 @@ func (e *DetectionService) GetFileRecordInfoList(info request.PageInfo) (list in
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
 	keyword := info.Keyword
-	user := info.User
-	app := info.App
+	//user := info.User
+	//app := info.App
+	batchid := info.Batchid
 	db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
 	var fileLists []model.DetectionFileUploadAndDownload
-	if len(user) > 0 {
-		db = db.Where("own = '" + user + "'")
+	if len(batchid) > 0 {
+		db = db.Where("batchid = '" + batchid + "'")
 	}
-	if len(app) > 0 {
-		db = db.Where("app = '" + app + "'")
-	}
+	//if len(user) > 0 {
+	//	db = db.Where("user = '" + user + "'")
+	//}
+	//if len(app) > 0 {
+	//	db = db.Where("app = '" + app + "'")
+	//}
 	if len(keyword) > 0 {
 		db = db.Where("name LIKE ?", "%"+keyword+"%")
 	}
 	err = db.Count(&total).Error
 	if err != nil {
+		global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
 		return
 	}
-	err = db.Limit(limit).Offset(offset).Order("updated_at desc").Find(&fileLists).Error
+	err = db.Limit(limit).Offset(offset).Order("name asc").Find(&fileLists).Error
 	return fileLists, total, err
 }
 
@@ -119,7 +117,7 @@ func (e *DetectionService) GetFileRecordInfoList(info request.PageInfo) (list in
 //@param: header *multipart.FileHeader, noSave string
 //@return: file model.ExaFileUploadAndDownload, err error
 
-func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave string, user string, app string) (file model.DetectionFileUploadAndDownload, err error) {
+func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave string, user string, app string, batchid string, size string) (file model.DetectionFileUploadAndDownload, err error) {
 	oss := upload.NewOss()
 	filePath, key, uploadErr := oss.UploadFile(header)
 	mkdirErr := os.MkdirAll(global.GVA_CONFIG.Local.TmpPath, os.ModePerm)
@@ -130,14 +128,21 @@ func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave strin
 		panic(err)
 	}
 	if noSave == "0" {
+
+		re := regexp.MustCompile(`filename="([^"]*)"`)
+		matches := re.FindAllStringSubmatch(header.Header.Get("Content-Disposition"), -1)
+		filename := header.Filename
+		for _, match := range matches {
+			filename = match[1]
+		}
 		s := strings.Split(header.Filename, ".")
 		f := model.DetectionFileUploadAndDownload{
-			Url:  filePath,
-			Name: header.Filename,
-			Tag:  s[len(s)-1],
-			Key:  key,
-			Own:  user,
-			App:  app,
+			Url:     filePath,
+			Name:    filename,
+			Tag:     s[len(s)-1],
+			Key:     key,
+			Batchid: batchid,
+			Size:    size,
 		}
 		return f, e.Upload(f)
 	}
@@ -145,21 +150,160 @@ func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave strin
 }
 
 func (e *DetectionService) Dojob() {
-	for{
+	for {
 		if global.GVA_DB == nil {
 			time.Sleep(time.Second * 10)
 			continue
 		}
 		break
 	}
-	for i := range local.GlobalConfig_.ModelConfig {
-		c := local.GlobalConfig_.ModelConfig[i]
-		if c.Algorithm == "yolov8seg" {
-			go perception.Yolov8seg(c.ModelPath, c.App)
-		} else if c.Algorithm == "yolov5" {
-			go perception.Yolov5(c.ModelPath, c.App)
+	for {
+		db := global.GVA_DB.Model(&model.DetectionFileBatch{})
+		var batchLists []model.DetectionFileBatch
+		db = db.Where("status = 'ready'")
+		err := db.Order("created_at desc").Find(&batchLists).Error
+		if err != nil {
+			global.GVA_DB.AutoMigrate(model.DetectionFileBatch{})
+			global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
+			continue
 		}
+
+		for ii := range batchLists {
+			app := batchLists[ii].App
+			batchid := batchLists[ii].Batchid
+			id := batchLists[ii].ID
+
+			for i := range local.GlobalConfig_.ModelConfig {
+				c := local.GlobalConfig_.ModelConfig[i]
+				if c.App == app {
+					//fmt.Print(batchid, c)
+					perception.RunBatch(c.ProgramPath, batchid, id)
+
+				}
+
+			}
+		}
+		time.Sleep(time.Second * 10)
 	}
-	//perception.Yolov5("yolov5s.onnx")
-	//perception.Yolov8seg("yolov5s.onnx")
+
+}
+
+func (e *DetectionService) GetBatchInfoList(info request.PageInfo) (list interface{}, total int64, err error) {
+	limit := info.PageSize
+	offset := info.PageSize * (info.Page - 1)
+	keyword := info.Keyword
+	user := info.User
+	app := info.App
+	db := global.GVA_DB.Model(&model.DetectionFileBatch{})
+	var fileLists []model.DetectionFileBatch
+	if len(user) > 0 {
+		db = db.Where("own = '" + user + "'")
+	}
+	if len(app) > 0 {
+		db = db.Where("app = '" + app + "'")
+	}
+	if len(keyword) > 0 {
+		db = db.Where("batchid LIKE ?", "%"+keyword+"%")
+	}
+	err = db.Count(&total).Error
+	if err != nil {
+		global.GVA_DB.AutoMigrate(model.DetectionFileBatch{})
+		global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
+		return
+	}
+	err = db.Limit(limit).Offset(offset).Order("updated_at desc").Find(&fileLists).Error
+	return fileLists, total, err
+}
+
+func (e *DetectionService) NewBatch(user string, app string, batchid string, filesCount int, filesSize string) (file model.DetectionFileBatch, err error) {
+	f := model.DetectionFileBatch{
+		Batchid:    batchid,
+		Own:        user,
+		App:        app,
+		FilesCount: filesCount,
+		FilesSize:  filesSize,
+		Status:     "uploading",
+	}
+
+	return f, global.GVA_DB.Create(&f).Error
+}
+
+func (e *DetectionService) DeleteBatch(user string, app string, batchid string, status string) (err error) {
+	db := global.GVA_DB.Model(&model.DetectionFileBatch{})
+	err = db.Where("batchid = ?", batchid).Unscoped().Delete(&model.DetectionFileBatch{}, "app = ?", app).Error
+	if err != nil {
+		return err
+	}
+	db2 := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
+	var fileLists []model.DetectionFileUploadAndDownload
+	err = db2.Where("batchid = '" + batchid + "'").Find(&fileLists).Error
+	for i := range fileLists {
+		var fileFromDb model.DetectionFileUploadAndDownload
+		fileFromDb, err = e.FindFile(fileLists[i].ID)
+		if err != nil {
+			return err
+		}
+		oss := upload.NewOss()
+		if err = oss.DeleteFile(fileFromDb.Key); err != nil {
+			return errors.New("文件删除失败")
+		}
+		if fileLists[i].UrlDetection != "" {
+			err = os.Remove(fileLists[i].UrlDetection)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = global.GVA_DB.Where("id = ?", fileLists[i].ID).Unscoped().Delete(&fileLists[i]).Error
+	}
+
+	return err
+}
+
+func formatSize(size int64) string {
+	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"}
+	var i int
+	floatSize := float64(size)
+	for i = 0; floatSize >= 1024 && i < len(units)-1; i++ {
+		floatSize /= 1024
+	}
+	return fmt.Sprintf("%.2f %s", floatSize, units[i])
+}
+
+func (e *DetectionService) ChangeStatus(user string, app string, batchid string, status string) (err error) {
+	db := global.GVA_DB.Model(&model.DetectionFileBatch{})
+	db = db.Where("batchid = ?", batchid).Where("app = ?", app)
+	err = db.Update("status", status).Error
+	if err != nil {
+		return err
+	}
+	db2 := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
+
+	var total int64
+	db2 = db2.Where("batchid = '" + batchid + "'")
+	err = db2.Count(&total).Error
+	if err != nil {
+		return err
+	}
+	var fileLists []model.DetectionFileUploadAndDownload
+	var fileSize int64
+	err = db2.Find(&fileLists).Error
+	for i := range fileLists {
+		number_int, err := strconv.Atoi(fileLists[i].Size)
+		if err != nil {
+			return err
+		}
+		fileSize += int64(number_int)
+	}
+	if err != nil {
+		return err
+	}
+	err = db.Update("FilesCount", total).Error
+	if err != nil {
+		return err
+	}
+	formattedSize := formatSize(fileSize)
+	fmt.Println(formattedSize)
+	err = db.Update("FilesSize", formattedSize).Error
+	return err
 }

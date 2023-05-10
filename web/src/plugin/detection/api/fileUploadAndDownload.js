@@ -50,3 +50,43 @@ export const getRouterName = (data) => {
     data
   })
 }
+
+export const getBatchList = (data) => {
+  return service({
+    url: '/detection/getBatchList',
+    method: 'post',
+    data
+  })
+}
+
+export const deleteBatch = (data) => {
+  return service({
+    url: '/detection/deleteBatch',
+    method: 'post',
+    data
+  })
+}
+
+export const editBatch = (data) => {
+  return service({
+    url: '/detection/editBatch',
+    method: 'post',
+    data
+  })
+}
+
+export const newBatch = (data) => {
+  return service({
+    url: '/detection/newBatch',
+    method: 'post',
+    data
+  })
+}
+
+export const changeStatus = (data) => {
+  return service({
+    url: '/detection/changeStatus',
+    method: 'post',
+    data
+  })
+}

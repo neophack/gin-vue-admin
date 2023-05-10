@@ -45,17 +45,28 @@ func (b *DetectionApi) UploadFile(c *gin.Context) {
 	_, header, err := c.Request.FormFile("file")
 	userName := c.Request.Header.Get("User")
 	appName := c.Request.Header.Get("App")
+	batchid := c.Request.Header.Get("Batchid")
+	size := c.Request.Header.Get("Content-Length")
+	//fmt.Println("size:", size)
 	if err != nil {
 		global.GVA_LOG.Error("接收文件失败!", zap.Error(err))
 		response.FailWithMessage("接收文件失败", c)
 		return
 	}
-	file, err = DetectionService.UploadFile(header, noSave, userName,appName) // 文件上传后拿到文件路径
+	file, err = DetectionService.UploadFile(header, noSave, userName, appName, batchid, size) // 文件上传后拿到文件路径
 	if err != nil {
 		global.GVA_LOG.Error("修改数据库链接失败!", zap.Error(err))
 		response.FailWithMessage("修改数据库链接失败", c)
 		return
 	}
+	//if progress > 99.99 {
+	//	db := global.GVA_DB.Model(&model.DetectionFileBatch{})
+	//	err = db.Where("batchid = ?", batchid).Update("status", "finish").Error
+	//	if err != nil {
+	//		return
+	//	}
+	//}
+
 	response.OkWithDetailed(model.DetectionFileResponse{File: file}, "上传成功", c)
 }
 
@@ -127,4 +138,91 @@ func (b *DetectionApi) GetFileList(c *gin.Context) {
 		Page:     pageInfo.Page,
 		PageSize: pageInfo.PageSize,
 	}, "获取成功", c)
+}
+
+func (b *DetectionApi) GetBatchList(c *gin.Context) {
+	var pageInfo request.PageInfo
+	err := c.ShouldBindJSON(&pageInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, err := DetectionService.GetBatchInfoList(pageInfo)
+	if err != nil {
+		global.GVA_LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败", c)
+		return
+	}
+	response.OkWithDetailed(response.PageResult{
+		List:     list,
+		Total:    total,
+		Page:     pageInfo.Page,
+		PageSize: pageInfo.PageSize,
+	}, "获取成功", c)
+}
+
+func (b *DetectionApi) NewBatch(c *gin.Context) {
+
+	var pageInfo model.DetectionFileBatch
+	err := c.ShouldBindJSON(&pageInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	userName := pageInfo.Own
+	appName := pageInfo.App
+	batchName := pageInfo.Batchid
+	filesCount := pageInfo.FilesCount
+	filesSize := pageInfo.FilesSize
+
+	file, err := DetectionService.NewBatch(userName, appName, batchName, filesCount, filesSize) // 文件上传后拿到文件路径
+	if err != nil {
+		global.GVA_LOG.Error("修改数据库链接失败!", zap.Error(err))
+		response.FailWithMessage("修改数据库链接失败", c)
+		return
+	}
+	response.OkWithDetailed(model.DetectionBatchResponse{File: file}, "new成功", c)
+}
+
+func (b *DetectionApi) ChangeStatus(c *gin.Context) {
+	var pageInfo model.DetectionFileBatch
+	err := c.ShouldBindJSON(&pageInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	userName := pageInfo.Own
+	appName := pageInfo.App
+	batchName := pageInfo.Batchid
+	status := pageInfo.Status
+
+	err = DetectionService.ChangeStatus(userName, appName, batchName, status) // 文件上传后拿到文件路径
+	if err != nil {
+		global.GVA_LOG.Error("修改数据库链接失败!", zap.Error(err))
+		response.FailWithMessage("修改数据库链接失败", c)
+		return
+	}
+	response.OkWithDetailed(gin.H{"data": "ok"}, "update成功", c)
+}
+
+func (b *DetectionApi) DeleteBatch(c *gin.Context) {
+	var pageInfo model.DetectionFileBatch
+	err := c.ShouldBindJSON(&pageInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	userName := pageInfo.Own
+	appName := pageInfo.App
+	batchName := pageInfo.Batchid
+	status := pageInfo.Status
+
+	err = DetectionService.DeleteBatch(userName, appName, batchName, status)
+
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithMessage("删除成功", c)
 }

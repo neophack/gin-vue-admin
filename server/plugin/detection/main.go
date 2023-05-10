@@ -10,10 +10,12 @@ import (
 
 type DetectionPlugin struct {
 }
+
 var DetectionService = service.ServiceGroupApp.DetectionService
-func CreateDetectionPlug(config []config.ModelConfig, ) *DetectionPlugin {
+
+func CreateDetectionPlug(config []config.ModelConfig) *DetectionPlugin {
 	global.GlobalConfig_.ModelConfig = config
-	DetectionService.Dojob()
+	go DetectionService.Dojob()
 	return &DetectionPlugin{}
 }
 

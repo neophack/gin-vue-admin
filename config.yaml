@@ -7,7 +7,7 @@ aliyun-oss:
   base-path: yourBasePath
 autocode:
   transfer-restart: true
-  root: /home/nn/workspace/gin-vue-admin
+  root: /home/nn/workspace
   server: /server
   server-api: /api/v1/%s
   server-plug: /plugin/%s
@@ -85,7 +85,7 @@ hua-wei-obs:
   access-key: you-access-key
   secret-key: you-secret-key
 jwt:
-  signing-key: 2ad7344a-1fda-4e9e-9306-4a600b8eaa85
+  signing-key: d49a834f-dfc2-416c-9af6-de4baad39ff3
   expires-time: 7d
   buffer-time: 1d
   issuer: qmPlus

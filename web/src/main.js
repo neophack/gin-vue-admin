@@ -22,6 +22,13 @@ initDom()
  * */
 import Nprogress from 'nprogress'
 import 'nprogress/nprogress.css'
+import VueUploadComponent from 'vue-upload-component'
+import VXETable from 'vxe-table'
+// import { Tooltip } from 'vxe-table'
+import 'vxe-table/lib/style.css'
+import 'viewerjs/dist/viewer.css'
+import VueViewer from 'v-viewer'
+import Lightgallery from 'lightgallery/vue'
 Nprogress.configure({ showSpinner: false, ease: 'ease', speed: 500 })
 Nprogress.start()
 
@@ -37,6 +44,9 @@ app
   .use(store)
   .use(auth)
   .use(router)
+  .use(VueViewer)
   .mount('#app')
-
+app.component('file-upload', VueUploadComponent)
+app.component('Lightgallery', Lightgallery)
+app.use(VXETable)
 export default app

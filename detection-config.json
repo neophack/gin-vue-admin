@@ -1,6 +1,6 @@
 [
   {
-    "program_path": "//home/nn/workspace/deep_perception_engine_packtool/mosaic_image-x86_64.AppImage",
+    "program_path": "/home/nn/workspace/deep_perception_engine/mosaic_image-x86_64.AppImage",
     "app": "plugin-detection",
     "data_type": "dir,image",
     "program_name": "mosaic_image"
