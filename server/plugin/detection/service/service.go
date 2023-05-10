@@ -150,6 +150,7 @@ func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave strin
 }
 
 func (e *DetectionService) Dojob() {
+	maxJobs := int64(4) //set max jobs
 	for {
 		if global.GVA_DB == nil {
 			time.Sleep(time.Second * 10)
@@ -158,6 +159,7 @@ func (e *DetectionService) Dojob() {
 		break
 	}
 	for {
+		time.Sleep(time.Second * 5)
 		db := global.GVA_DB.Model(&model.DetectionFileBatch{})
 		var batchLists []model.DetectionFileBatch
 		db = db.Where("status = 'ready'")
@@ -167,6 +169,7 @@ func (e *DetectionService) Dojob() {
 			global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
 			continue
 		}
+		var workingCount int64
 
 		for ii := range batchLists {
 			app := batchLists[ii].App
@@ -177,13 +180,23 @@ func (e *DetectionService) Dojob() {
 				c := local.GlobalConfig_.ModelConfig[i]
 				if c.App == app {
 					//fmt.Print(batchid, c)
-					perception.RunBatch(c.ProgramPath, batchid, id)
+					db = global.GVA_DB.Model(&model.DetectionFileBatch{})
+					err = db.Where("status = 'working'").Count(&workingCount).Error
+					if err != nil {
+						continue
+					}
+					fmt.Print("workingCount:", workingCount)
+					if workingCount < maxJobs {
+						go perception.RunBatch(c.ProgramPath, batchid, id)
+						time.Sleep(time.Second * 1)
+						i = 0
+					}
 
 				}
 
 			}
+
 		}
-		time.Sleep(time.Second * 10)
 	}
 
 }

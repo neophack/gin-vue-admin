@@ -17,6 +17,12 @@ import (
 )
 
 func RunBatch(programPath string, batchid string, id uint) {
+	db2 := global.GVA_DB.Model(&model.DetectionFileBatch{})
+	err := db2.Where("id = ?", id).Update("status", "working").Error
+	if err != nil {
+		return
+	}
+
 	mkdirErr := os.MkdirAll(global.GVA_CONFIG.Local.TmpPath, os.ModePerm)
 	if mkdirErr != nil {
 		global.GVA_LOG.Error("function os.MkdirAll() Filed", zap.Any("err", mkdirErr.Error()))
@@ -25,7 +31,7 @@ func RunBatch(programPath string, batchid string, id uint) {
 	var fileLists []model.DetectionFileUploadAndDownload
 	db = db.Where("batchid = '" + batchid + "'")
 	//db = db.Where("url_detection = '' or url_detection isnull")
-	err := db.Order("created_at desc").Find(&fileLists).Error
+	err = db.Order("created_at desc").Find(&fileLists).Error
 	if err != nil {
 		return
 	}
@@ -90,11 +96,6 @@ func RunBatch(programPath string, batchid string, id uint) {
 	// get pid of the process
 	pid := cmd.Process.Pid
 	fmt.Println("PID: ", pid)
-	db2 := global.GVA_DB.Model(&model.DetectionFileBatch{})
-	err = db2.Where("id = ?", id).Update("status", "working").Error
-	if err != nil {
-		return
-	}
 
 	go func() {
 		scanner := bufio.NewScanner(output)
