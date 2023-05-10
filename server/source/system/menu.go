@@ -79,7 +79,8 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "installPlugin", Name: "installPlugin", Component: "view/systemTools/installPlugin/index.vue", Sort: 1, Meta: Meta{Title: "插件安装", Icon: "box"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "autoPlug", Name: "autoPlug", Component: "view/systemTools/autoPlug/autoPlug.vue", Sort: 2, Meta: Meta{Title: "插件模板", Icon: "folder"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "plugin-email", Name: "plugin-email", Component: "plugin/email/view/index.vue", Sort: 3, Meta: Meta{Title: "邮件插件", Icon: "message"}},
-		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "plugin-detection", Name: "plugin-detection", Component: "plugin/detection/index.vue", Sort: 4, Meta: Meta{Title: "脱敏DEMO插件", Icon: "message"}},
+		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "plugin-detection", Name: "plugin-detection", Component: "plugin/detection/index.vue", Sort: 4, Meta: Meta{Title: "图像脱敏插件", Icon: "message"}},
+		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "plugin-detection2", Name: "plugin-detection2", Component: "plugin/detection/index_video.vue", Sort: 5, Meta: Meta{Title: "视频脱敏插件", Icon: "message"}},
 
 	}
 	if err = db.Create(&entities).Error; err != nil {

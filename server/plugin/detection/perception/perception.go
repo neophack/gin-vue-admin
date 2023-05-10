@@ -52,10 +52,13 @@ func RunBatch(programPath string, batchid string, id uint) {
 			log.Fatal(err)
 		}
 		if fileLists[ii].UrlDetection != "" {
-			err = os.Remove(fileLists[ii].UrlDetection)
-			if err != nil {
-				log.Fatal(err)
-				return
+			_, err = os.Stat(fileLists[ii].UrlDetection)
+			if !os.IsNotExist(err) {
+				err = os.Remove(fileLists[ii].UrlDetection)
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
 			}
 		}
 	}
@@ -140,6 +143,10 @@ func RunBatch(programPath string, batchid string, id uint) {
 
 	if err := cmd.Wait(); err != nil {
 		fmt.Println("exit error!")
+		err = db2.Where("id = ?", id).Update("status", "error").Error
+		if err != nil {
+			return
+		}
 		return
 	}
 	fmt.Println("finish!")

@@ -3,7 +3,7 @@
     <div class="gva-table-box">
       <div class="upload">
         <div v-show="$refs.upload && $refs.upload.dropActive" class="drop-active">
-          <h3>Drop files to upload</h3>
+          <h3>文件拖进上传</h3>
         </div>
         <file-upload
           ref="upload"
@@ -35,7 +35,7 @@
         <!--          class="upload-btn"-->
         <!--          @on-success="getTableData"-->
         <!--        />-->
-        <el-button type="primary" @click="uploadDialog()">upload</el-button>
+        <el-button type="primary" @click="uploadDialog()">上传</el-button>
         <el-form ref="searchForm" :inline="true" :model="search">
           <el-form-item label="">
             <el-input
@@ -72,26 +72,26 @@
         <!--            />-->
         <!--          </template>-->
         <!--        </el-table-column>-->
-        <el-table-column align="left" label="batches" prop="name" min-width="280">
+        <el-table-column align="left" label="批次" prop="name" min-width="200">
           <template #default="scope">
             <div class="name">
               {{ scope.row.batchid }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="update日期" prop="UpdatedAt" width="180">
+        <el-table-column align="left" label="更新日期" prop="UpdatedAt" width="180">
           <template #default="scope">
             <div>{{ formatDate(scope.row.UpdatedAt) }}</div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="count" prop="count" min-width="80">
+        <el-table-column align="left" label="数量" prop="count" min-width="80">
           <template #default="scope">
             <div>
               {{ scope.row.files_count }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="progress" prop="progress" min-width="180">
+        <el-table-column align="left" label="进度" prop="progress" min-width="100">
           <template #default="scope">
             <div>
               <el-progress :text-inside="true" :stroke-width="22" :percentage="Number(scope.row.progress)" />
@@ -100,29 +100,30 @@
         </el-table-column>
 
         <!-- <el-table-column align="left" label="链接" prop="url" min-width="300" /> -->
-        <el-table-column align="left" label="size" prop="tag" width="100">
+        <el-table-column align="left" label="大小" prop="tag" width="100">
           <template #default="scope">
             <div>
               {{ scope.row.files_size }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="status" prop="status" min-width="100">
+        <el-table-column align="left" label="状态" prop="status" min-width="100">
           <template #default="scope">
             <div>
               {{ scope.row.status }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="操作" width="460">
+        <el-table-column align="left" label="操作" min-width="360">
           <template #default="scope">
-            <el-button icon="view" type="primary" @click="viewFiles(scope.row,false)">view</el-button>
-            <el-button icon="view" type="primary" @click="viewFiles(scope.row,true)">res</el-button>
-            <el-button v-if="scope.row.status=='ready'" type="primary" @click="onChangeStatus(scope.row)">pause</el-button>
-            <el-button v-else type="primary" @click="onChangeStatus(scope.row)">run-></el-button>
-            <!--            <el-button icon="edit" type="primary" @click="downloadFile(scope.row)">edit</el-button>-->
-            <el-button icon="download" type="primary" @click="downloadFile(scope.row)">下载</el-button>
+            <el-button size="small" icon="view" type="primary" @click="viewFiles(scope.row,false)">原图</el-button>
+            <el-button size="small" icon="view" type="primary" @click="viewFiles(scope.row,true)">结果</el-button>
+            <el-button size="small" icon="VideoPause" v-if="scope.row.status=='ready'" type="primary" @click="onChangeStatus(scope.row)">暂停</el-button>
+            <el-button size="small" icon="VideoPlay" v-else type="primary" @click="onChangeStatus(scope.row)">运行</el-button>
+            <!--            <el-button icon="edit" type="primary" @click="downloadFile(scope.row)">编辑</el-button>-->
+            <el-button size="small" icon="download" type="primary" @click="downloadFile(scope.row)">下载</el-button>
             <el-button
+                    size="small"
               v-if="isAdmin"
               icon="delete"
               type="danger"
@@ -148,12 +149,12 @@
     <el-dialog v-model="dialogVisible">
       <img w-full :src="dialogImageUrl" alt="Preview Image" style="width: 100%">
     </el-dialog>
-    <el-dialog v-model="uploadVisible" title="upload">
+    <el-dialog v-model="uploadVisible" title="上传">
 
       <!--      <div class="gva-btn-list">-->
       <el-space :size="8" spacer=" ">
-        <el-button @click="onAddFiles">Select files</el-button>
-        <el-button @click="onAddFolder">Select folder</el-button>
+        <el-button @click="onAddFiles">文件</el-button>
+        <el-button @click="onAddFolder">文件夹</el-button>
         <el-button
           v-if="!$refs.upload || !$refs.upload.active"
           type="primary"
@@ -161,7 +162,7 @@
           @click.prevent="onUploadFiles"
         >
           <i class="fa fa-arrow-up" aria-hidden="true" />
-          Start Upload
+          开始上传
         </el-button>
         <el-button
           v-else
@@ -171,13 +172,17 @@
           @click.prevent="$refs.upload.active = false"
         >
           <i class="fa fa-stop" aria-hidden="true" />
-          Stop Upload
+          停止上传
         </el-button>
-        <el-button type="danger" @click="reset()">Reset</el-button>
+        <el-button type="danger" @click="reset()">重置</el-button>
 
       </el-space>
       <el-space :size="8" spacer=" ">
-        <el-input v-model="batchid" placeholder="batchid" />
+        <el-input v-model="batchid" placeholder="batchid">
+          <template #append>
+            <el-button  icon="Refresh" @click="batchid = getCurrentTime()" />
+          </template>
+        </el-input>
 
         {{ files.filter(f => f.success).length }}/{{ files.length }}
         <el-progress
@@ -318,7 +323,7 @@ const viewFileVisible = ref(false)
 const current_file = ref('')
 const current_fileurl = ref('')
 const progress0 = ref(0)
-const isAdmin = userStore.userInfo.authorityId=='888'
+const isAdmin = userStore.userInfo.authorityId == '888'
 
 const postAction = path.value + '/detection/upload'
 const headers = {
@@ -330,6 +335,7 @@ const headers = {
 }
 
 const extensions = 'jpeg|jpe|jpg|gif|png|webp'
+// const extensions = 'mp4|avi|mkv|mov'
 
 // 分页
 const handleSizeChange = (val) => {
@@ -747,5 +753,31 @@ export default {
     overflow: hidden; /*溢出的部分隐藏*/
     white-space: nowrap; /*文本不换行*/
     text-overflow: ellipsis; /*ellipsis:文本溢出显示省略号（...）；clip：不显示省略标记（...），而是简单的裁切*/
+}
+
+.drop-active {
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    position: fixed;
+    z-index: 9999;
+    opacity: .6;
+    text-align: center;
+    background: #000;
+}
+
+.drop-active h3 {
+    margin: -.5em 0 0;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    font-size: 40px;
+    color: #fff;
+    padding: 0;
 }
 </style>
