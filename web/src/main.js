@@ -28,7 +28,8 @@ import VXETable from 'vxe-table'
 import 'vxe-table/lib/style.css'
 import 'viewerjs/dist/viewer.css'
 import VueViewer from 'v-viewer'
-import Lightgallery from 'lightgallery/vue'
+import VueVideoPlayer from '@videojs-player/vue'
+import 'video.js/dist/video-js.css'
 Nprogress.configure({ showSpinner: false, ease: 'ease', speed: 500 })
 Nprogress.start()
 
@@ -45,8 +46,8 @@ app
   .use(auth)
   .use(router)
   .use(VueViewer)
+  .use(VueVideoPlayer)
   .mount('#app')
-app.component('file-upload', VueUploadComponent)
-app.component('Lightgallery', Lightgallery)
+app.component('FileUpload', VueUploadComponent)
 app.use(VXETable)
 export default app

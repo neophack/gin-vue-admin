@@ -7,7 +7,7 @@
   },
   {
     "program_path": "/home/nn/workspace/deep_perception_engine_packtool/mosaic_video-x86_64.AppImage",
-    "app": "plugin-detection2",
+    "app": "plugin-detection-video",
     "data_type": "video",
     "program_name": "mosaic_video"
   }

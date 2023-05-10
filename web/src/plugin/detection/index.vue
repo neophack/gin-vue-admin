@@ -19,9 +19,8 @@
           @input-filter="inputFilter"
         />
       </div>
-
-      <warning-bar title="按上传时间顺序后台识别，负载高时请耐心等待" />
-
+      <!--        <warning-bar title="按上传时间顺序后台识别，负载高时请耐心等待"/>-->
+      <warning-bar :title="extensions" />
       <div class="gva-btn-list">
         <!--        <upload-common-->
         <!--          v-model:imageCommon="imageCommon"-->
@@ -114,17 +113,17 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="操作" min-width="360">
+        <el-table-column align="left" label="操作" min-width="400">
           <template #default="scope">
             <el-button size="small" icon="view" type="primary" @click="viewFiles(scope.row,false)">原图</el-button>
             <el-button size="small" icon="view" type="primary" @click="viewFiles(scope.row,true)">结果</el-button>
-            <el-button size="small" icon="VideoPause" v-if="scope.row.status=='ready'" type="primary" @click="onChangeStatus(scope.row)">暂停</el-button>
-            <el-button size="small" icon="VideoPlay" v-else type="primary" @click="onChangeStatus(scope.row)">运行</el-button>
+            <el-button v-if="scope.row.status=='ready'" size="small" icon="VideoPause" type="primary" @click="onChangeStatus(scope.row)">暂停</el-button>
+            <el-button v-else size="small" icon="VideoPlay" type="primary" @click="onChangeStatus(scope.row)">运行</el-button>
             <!--            <el-button icon="edit" type="primary" @click="downloadFile(scope.row)">编辑</el-button>-->
             <el-button size="small" icon="download" type="primary" @click="downloadFile(scope.row)">下载</el-button>
             <el-button
-                    size="small"
               v-if="isAdmin"
+              size="small"
               icon="delete"
               type="danger"
               @click="onDeleteBatch(scope.row)"
@@ -153,8 +152,8 @@
 
       <!--      <div class="gva-btn-list">-->
       <el-space :size="8" spacer=" ">
-        <el-button @click="onAddFiles">文件</el-button>
-        <el-button @click="onAddFolder">文件夹</el-button>
+        <el-button @click="onAddFiles(false)">文件</el-button>
+        <el-button @click="onAddFiles(true)">文件夹</el-button>
         <el-button
           v-if="!$refs.upload || !$refs.upload.active"
           type="primary"
@@ -180,7 +179,7 @@
       <el-space :size="8" spacer=" ">
         <el-input v-model="batchid" placeholder="batchid">
           <template #append>
-            <el-button  icon="Refresh" @click="batchid = getCurrentTime()" />
+            <el-button icon="Refresh" @click="batchid = getCurrentTime()" />
           </template>
         </el-input>
 
@@ -251,9 +250,9 @@
         </vxe-table>
       </span>
     </el-dialog>
-    <el-dialog v-model="viewFileVisible" title="view" width="96%">
+    <el-dialog v-model="viewFileVisible" title="Video Player" width="1200px">
       <el-container>
-        <el-aside width="20%">
+        <el-aside width="300px">
           <vxe-table
             ref="xTable"
             keep-source
@@ -276,7 +275,13 @@
         </el-aside>
         <el-main>
           <warning-bar :title="current_file" />
-
+          <video-player
+            :src="current_fileurl"
+            controls
+            :loop="true"
+            :volume="0.6"
+            width="800"
+          />
         </el-main>
       </el-container>
 
@@ -315,6 +320,9 @@ const route = useRoute()
 const batchid = ref('0001')
 const filetableData = ref([])
 const filetotal = ref(0)
+const showRes = ref(false)
+const isVideo = ref(route.name.includes('video'))
+const lastRoute = ref('')
 
 const dialogImageUrl = ref('')
 const dialogVisible = ref(false)
@@ -333,9 +341,9 @@ const headers = {
   'batchid': batchid,
   'progress': progress0
 }
-
-const extensions = 'jpeg|jpe|jpg|gif|png|webp'
-// const extensions = 'mp4|avi|mkv|mov'
+const image_extensions = 'jpeg|jpe|jpg|png'
+const video_extensions = 'mp4|avi|mkv|mov'
+const extensions = ref(isVideo.value ? video_extensions : image_extensions)
 
 // 分页
 const handleSizeChange = (val) => {
@@ -349,7 +357,7 @@ const handleCurrentChange = (val) => {
 }
 const currentInstance = getCurrentInstance()
 
-const onAddFolder = async() => {
+const onAddFiles = async(isfolder) => {
   if (!currentInstance.refs.upload.features.directory) {
     this.alert('Your browser does not support')
     return
@@ -357,29 +365,17 @@ const onAddFolder = async() => {
   const input = document.createElement('input')
   input.style = 'background: rgba(255, 255, 255, 0);overflow: hidden;position: fixed;width: 1px;height: 1px;z-index: -1;opacity: 0;'
   input.type = 'file'
-  input.setAttribute('allowdirs', true)
-  input.setAttribute('directory', true)
-  input.setAttribute('webkitdirectory', true)
-  input.multiple = true
-  document.querySelector('body').appendChild(input)
-  input.click()
-  input.onchange = (e) => {
-    currentInstance.refs.upload.addInputFile(input).then(function() {
-      document.querySelector('body').removeChild(input)
-    })
+  if (isfolder) {
+    input.setAttribute('allowdirs', true)
+    input.setAttribute('directory', true)
+    input.setAttribute('webkitdirectory', true)
+  } else {
+      input.accept="."+extensions.value.replaceAll("|",",.",-1)
+    input.setAttribute('allowdirs', false)
+    // input.setAttribute('directory', false)
+    // input.setAttribute('webkitdirectory', false)
   }
-}
-const onAddFiles = async() => {
-  if (!currentInstance.refs.upload.features.directory) {
-    this.alert('Your browser does not support')
-    return
-  }
-  const input = document.createElement('input')
-  input.style = 'background: rgba(255, 255, 255, 0);overflow: hidden;position: fixed;width: 1px;height: 1px;z-index: -1;opacity: 0;'
-  input.type = 'file'
-  input.setAttribute('allowdirs', false)
-  // input.setAttribute('directory', false)
-  // input.setAttribute('webkitdirectory', false)
+
   input.multiple = true
   document.querySelector('body').appendChild(input)
   input.click()
@@ -431,17 +427,6 @@ const onUploadFiles = async() => {
       })
       currentInstance.refs.upload.active = true
     }
-  }
-}
-
-const selFileView = (column) => {
-  console.log(`单元格点击${column.row.name}`)
-  current_file.value = column.row.name
-  var url = column.row.url
-  if (url !== '' && url.slice(0, 4) === 'http') {
-    current_fileurl.value = url
-  } else {
-    current_fileurl.value = path.value + '/' + url
   }
 }
 
@@ -510,7 +495,7 @@ const viewFiles = async(row, showres) => {
     // page.value = table.data.page
     // pageSize.value = table.data.pageSize
   }
-  // viewFileVisible.value = true
+
   var sourceImageURLs = []
   var sourceImageNames = []
   for (var i = 0; i < filetotal.value; i++) {
@@ -535,14 +520,38 @@ const viewFiles = async(row, showres) => {
       }
     }
   }
-  const viewer = viewerApi({
-    options: {
-      toolbar: true,
-      url: 'src',
-      initialViewIndex: 1,
-    },
-    images: sourceImageURLs,
-  })
+
+  showRes.value = showres
+  if (!isVideo.value) {
+    const viewer = viewerApi({
+      options: {
+        toolbar: true,
+        url: 'src',
+        initialViewIndex: 1,
+      },
+      images: sourceImageURLs,
+    })
+  } else {
+    viewFileVisible.value = true
+    if (sourceImageURLs.length > 0) {
+      current_file.value = sourceImageURLs[0].title
+      current_fileurl.value = sourceImageURLs[0].src
+    }
+  }
+}
+
+const selFileView = (column) => {
+  // console.log(`单元格点击${column.row.name}`)
+  current_file.value = column.row.name
+  var url = column.row.url
+  if (showRes.value) {
+    url = column.row.url_detection
+  }
+  if (url !== '' && url.slice(0, 4) === 'http') {
+    current_fileurl.value = url
+  } else {
+    current_fileurl.value = path.value + '/' + url
+  }
 }
 
 const inputFilter = (newFile, oldFile, prevent) => {
@@ -554,7 +563,7 @@ const inputFilter = (newFile, oldFile, prevent) => {
     // if (!/\.(jpeg|jpe|jpg|gif|png|webp)$/i.test(newFile.name)) {
     //   return prevent()
     // }
-    const regex = new RegExp(`\\.(${extensions})$`, 'i')
+    const regex = new RegExp(`\\.(${extensions.value})$`, 'i')
     if (!regex.test(newFile.name)) {
       return prevent()
     }
@@ -584,18 +593,6 @@ const inputFilter = (newFile, oldFile, prevent) => {
     // return prevent()
   }
 }
-
-// const getRouterData = async () => {
-//   const table = await getRouterName({
-//     page: page.value,
-//     pageSize: pageSize.value,
-//     ...search.value,
-//   });
-//   if (table.code === 0) {
-//     ElMessage("Warning",table.data);
-//   }
-// };
-// getRouterData();
 
 const onDeleteBatch = async(row) => {
   ElMessageBox.confirm('此操作将永久删除文件, 是否继续?', '提示', {
@@ -675,24 +672,39 @@ const handlePictureCardPreview = (url) => {
   dialogVisible.value = true
 }
 
-const timer = ref(null)
+const reset = async() => {
+  files.value = []
+}
 
+const timer = ref(null)
+const timerfast = ref(null)
 const reload = async() => {
   getTableData()
 }
-
-const reset = async() => {
-  files.value = []
+const reloadfast = async() => {
+  isVideo.value = route.name.includes('video')
+  extensions.value = isVideo.value ? video_extensions : image_extensions
+  if (lastRoute.value != route.name) {
+    reset()
+    getTableData()
+    lastRoute.value = route.name
+  }
 }
 
 timer.value = setInterval(() => {
   reload()
 }, 1000 * 5)
+timerfast.value = setInterval(() => {
+  reloadfast()
+}, 1000 * 1)
 
 onUnmounted(() => {
   clearInterval(timer.value)
   timer.value = null
+  clearInterval(timerfast.value)
+  timerfast.value = null
 })
+
 const uploadDialog = async() => {
   uploadVisible.value = true
   if (files.value.length == 0) {
