@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	local "github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/model"
 	"go.uber.org/zap"
 	"io/ioutil"
@@ -101,7 +102,7 @@ func RunBatch(programPath string, batchid string, id uint) {
 		scanner := bufio.NewScanner(output)
 		for scanner.Scan() {
 			line := scanner.Text()
-			fmt.Println(line)
+			//fmt.Println(line)
 			if strings.HasPrefix(line, "Progress: ") {
 				progressStr := strings.TrimPrefix(line, "Progress: ")
 				progress, err := strconv.ParseFloat(progressStr, 8)
@@ -109,7 +110,7 @@ func RunBatch(programPath string, batchid string, id uint) {
 				if err != nil {
 					panic(err)
 				}
-				fmt.Printf("Progress: %.1f%%\n", progress)
+				fmt.Printf("%s Progress: %.1f%%\n", batchid, progress)
 				//fmt.Println(progressStr)
 
 				err = db2.Where("id = ?", id).Update("progress", fmt.Sprintf("%.1f", progress)).Error
@@ -125,16 +126,21 @@ func RunBatch(programPath string, batchid string, id uint) {
 					for i := range fileLists {
 						newurl := strings.Replace(fileLists[i].Url, global.GVA_CONFIG.Local.StorePath, global.GVA_CONFIG.Local.TmpPath, 1)
 						_, err = os.Stat(newurl)
-						fmt.Println("IsNotExist", os.IsNotExist(err))
+						//fmt.Println("IsNotExist", os.IsNotExist(err))
 						if !os.IsNotExist(err) {
 							db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
 							err = db.Where("id = ?", fileLists[i].ID).Update("url_detection", newurl).Error
-							fmt.Println(fileLists[i].ID, newurl)
+							//fmt.Println(fileLists[i].ID, newurl)
 							if err != nil {
 								return
 							}
 						}
 
+					}
+				} else {
+					err = db2.Where("id = ?", id).Update("status", "working").Error
+					if err != nil {
+						return
 					}
 				}
 
@@ -151,4 +157,16 @@ func RunBatch(programPath string, batchid string, id uint) {
 		return
 	}
 	fmt.Println("finish!")
+
+	// 定义一个新的切片，用于存储不包含目标字符串的元素
+	newSlice := []string{}
+
+	// 遍历原始切片中的所有元素
+	for _, s := range local.WorkingBatchs_ {
+		// 如果当前元素与目标字符串不匹配，则将其添加到新切片中
+		if s != batchid {
+			newSlice = append(newSlice, s)
+		}
+	}
+	local.WorkingBatchs_ = newSlice
 }

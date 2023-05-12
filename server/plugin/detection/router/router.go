@@ -14,6 +14,7 @@ func (s *DetectionRouter) InitDetectionRouter(Router *gin.RouterGroup) {
 	plugApi := api.ApiGroupApp.DetectionApi
 	{
 		plugRouterFree.POST("upload", plugApi.UploadFile) // 上传文件
+		plugRouterFree.GET("downloadFilesZip", plugApi.DownloadFilesZip)
 	}
 	plugRouter := Router.Use(middleware.OperationRecord())
 	{

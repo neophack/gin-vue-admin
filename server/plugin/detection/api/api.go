@@ -1,44 +1,30 @@
 package api
 
 import (
+	"archive/zip"
+	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/model"
-	"github.com/flipped-aurora/gin-vue-admin/server/plugin/detection/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"io"
+	"log"
+	"os"
 )
 
 type DetectionApi struct{}
 
-// @Tags Detection
-// @Summary 请手动填写接口功能
-// @Produce  application/json
-// @Success 200 {string} string "{"success":true,"data":{},"msg":"发送成功"}"
-// @Router /detection/routerName [post]
-func (p *DetectionApi) ApiName(c *gin.Context) {
-
-	var plug model.Request
-	_ = c.ShouldBindJSON(&plug)
-
-	if res, err := service.ServiceGroupApp.PlugService(plug); err != nil {
-		global.GVA_LOG.Error("失败!", zap.Error(err))
-		response.FailWithMessage("失败", c)
-	} else {
-		response.OkWithDetailed(res, "成功", c)
-	}
-}
-
 // UploadFile
-// @Tags      ExaFileUploadAndDownload
+// @Tags      detection
 // @Summary   上传文件示例
 // @Security  ApiKeyAuth
 // @accept    multipart/form-data
 // @Produce   application/json
-// @Param     file  formData  file                                                           true  "上传文件示例"
-// @Success   200   {object}  response.Response{data=exampleRes.ExaFileResponse,msg=string}  "上传文件示例,返回包括文件详情"
-// @Router    /fileUploadAndDownload/upload [post]
+// @Param     file  formData  file Header.User Header.App Header.Batchid  Header.Content-Length   true  "上传文件"
+// @Success   200   {object}  response.Response{msg=string}  "上传文件示例,返回接收文件失败&上传成功"
+// @Router    /detection/uploadFile [post]
 func (b *DetectionApi) UploadFile(c *gin.Context) {
 	var file model.DetectionFileUploadAndDownload
 	noSave := c.DefaultQuery("noSave", "0")
@@ -70,7 +56,15 @@ func (b *DetectionApi) UploadFile(c *gin.Context) {
 	response.OkWithDetailed(model.DetectionFileResponse{File: file}, "上传成功", c)
 }
 
-// EditFileName 编辑文件名或者备注
+// EditFileName
+// @Tags      detection
+// @Summary   编辑文件名或者备注
+// @Security  ApiKeyAuth
+// @accept    multipart/form-data
+// @Produce   application/json
+// @Param     file  model.DetectionFileUploadAndDownload           true  "编辑文件名或者备注"
+// @Success   200   {object}  response.Response{msg=string}  "编辑文件名或者备注,返回编辑失败&编辑成功"
+// @Router    /detection/editFileName [post]
 func (b *DetectionApi) EditFileName(c *gin.Context) {
 	var file model.DetectionFileUploadAndDownload
 	err := c.ShouldBindJSON(&file)
@@ -88,13 +82,13 @@ func (b *DetectionApi) EditFileName(c *gin.Context) {
 }
 
 // DeleteFile
-// @Tags      ExaFileUploadAndDownload
+// @Tags      detection
 // @Summary   删除文件
 // @Security  ApiKeyAuth
 // @Produce   application/json
 // @Param     data  body      model.ExaFileUploadAndDownload  true  "传入文件里面id即可"
 // @Success   200   {object}  response.Response{msg=string}     "删除文件"
-// @Router    /fileUploadAndDownload/deleteFile [post]
+// @Router    /detection/deleteFile [post]
 func (b *DetectionApi) DeleteFile(c *gin.Context) {
 	var file model.DetectionFileUploadAndDownload
 	err := c.ShouldBindJSON(&file)
@@ -111,14 +105,14 @@ func (b *DetectionApi) DeleteFile(c *gin.Context) {
 }
 
 // GetFileList
-// @Tags      ExaFileUploadAndDownload
+// @Tags      detection
 // @Summary   分页文件列表
 // @Security  ApiKeyAuth
 // @accept    application/json
 // @Produce   application/json
 // @Param     data  body      request.PageInfo                                        true  "页码, 每页大小"
 // @Success   200   {object}  response.Response{data=response.PageResult,msg=string}  "分页文件列表,返回包括列表,总数,页码,每页数量"
-// @Router    /fileUploadAndDownload/getFileList [post]
+// @Router    /detection/getFileList [post]
 func (b *DetectionApi) GetFileList(c *gin.Context) {
 	var pageInfo request.PageInfo
 	err := c.ShouldBindJSON(&pageInfo)
@@ -140,6 +134,15 @@ func (b *DetectionApi) GetFileList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
+// GetBatchList
+// @Tags      detection
+// @Summary   分页文件列表
+// @Security  ApiKeyAuth
+// @accept    application/json
+// @Produce   application/json
+// @Param     data  body      request.PageInfo                                        true  "页码, 每页大小"
+// @Success   200   {object}  response.Response{data=response.PageResult,msg=string}  "分页文件列表,返回包括列表,总数,页码,每页数量"
+// @Router    /detection/getBatchList [post]
 func (b *DetectionApi) GetBatchList(c *gin.Context) {
 	var pageInfo request.PageInfo
 	err := c.ShouldBindJSON(&pageInfo)
@@ -161,8 +164,16 @@ func (b *DetectionApi) GetBatchList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
+// NewBatch
+// @Tags      detection
+// @Summary   NewBatch
+// @Security  ApiKeyAuth
+// @accept    application/json
+// @Produce   application/json
+// @Param     data  body      model.DetectionFileBatch                                        true  "DetectionFileBatch"
+// @Success   200   {object}  response.Response{data=model.DetectionBatchResponse,msg=string}  "NewBatch,返回err.Error()&model.DetectionBatchResponse"
+// @Router    /detection/newBatch [post]
 func (b *DetectionApi) NewBatch(c *gin.Context) {
-
 	var pageInfo model.DetectionFileBatch
 	err := c.ShouldBindJSON(&pageInfo)
 	if err != nil {
@@ -225,4 +236,94 @@ func (b *DetectionApi) DeleteBatch(c *gin.Context) {
 	}
 
 	response.OkWithMessage("删除成功", c)
+}
+
+func (b *DetectionApi) DownloadFilesZip(c *gin.Context) {
+	// 获取要下载的文件列表
+	batchid := c.Query("batchid")
+	result := c.Query("result")
+	if batchid == "" {
+		response.FailWithMessage("获取失败", c)
+		return
+	}
+	fmt.Println("batchid:", batchid)
+	var pageInfo request.PageInfo
+	pageInfo.Batchid = batchid
+	//err := c.ShouldBindJSON(&pageInfo)
+	//if err != nil {
+	//	response.FailWithMessage(err.Error(), c)
+	//	return
+	//}
+	flist, _, err := DetectionService.GetFileRecordInfoList(pageInfo)
+	if err != nil {
+		global.GVA_LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败", c)
+		return
+	}
+
+	// 设置响应头部信息
+	c.Header("Content-Type", "application/zip")
+	c.Header("Content-Disposition", "attachment; filename="+batchid+".zip")
+	c.Header("Content-Transfer-Encoding", "binary")
+
+	// 创建一个带缓冲的管道
+	//buf := new(bytes.Buffer)
+	writer := zip.NewWriter(c.Writer)
+
+	// 遍历要压缩的文件列表，并将文件内容写入管道中
+	for ii := range flist {
+		file := flist[ii].Url
+		if result != "" {
+			file = flist[ii].UrlDetection
+		}
+		f, err := os.Open(file)
+		if err != nil {
+			log.Printf("Failed to open file %s: %v\n", file, err)
+			continue
+		}
+
+		// 创建一个压缩文件的头部信息
+		info, err := os.Stat(file)
+		if err != nil {
+			log.Printf("Failed to get file info for %s: %v\n", file, err)
+			continue
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			log.Printf("Failed to create header for %s: %v\n", file, err)
+			continue
+		}
+
+		header.Name = flist[ii].Name
+
+		// 将文件内容写入管道中
+		fw, err := writer.CreateHeader(header)
+		if err != nil {
+			log.Printf("Failed to create writer for %s: %v\n", file, err)
+			continue
+		}
+
+		_, err = io.Copy(fw, f)
+		if err != nil {
+			log.Printf("Failed to write file content to zip: %v\n", err)
+			continue
+		}
+
+		f.Close()
+	}
+
+	// 关闭压缩写入器
+	err = writer.Close()
+	if err != nil {
+		log.Printf("Failed to close zip writer: %v\n", err)
+		return
+	}
+
+	//// 将压缩数据写入响应体中
+	//_, err = io.Copy(c.Writer, buf)
+	//if err != nil {
+	//	log.Printf("Failed to write zip data to response: %v\n", err)
+	//	return
+	//}
 }

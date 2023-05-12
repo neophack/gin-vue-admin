@@ -25,7 +25,7 @@ func (e *DetectionService) PlugService(req model.Request) (res model.Response, e
 	return res, nil
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
+//@author: [neophack](https://github.com/neophack)
 //@function: Upload
 //@description: 创建文件上传记录
 //@param: file model.ExaFileUploadAndDownload
@@ -35,7 +35,7 @@ func (e *DetectionService) Upload(file model.DetectionFileUploadAndDownload) err
 	return global.GVA_DB.Create(&file).Error
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
+//@author: [neophack](https://github.com/neophack)
 //@function: FindFile
 //@description: 查询文件记录
 //@param: id uint
@@ -47,7 +47,7 @@ func (e *DetectionService) FindFile(id uint) (model.DetectionFileUploadAndDownlo
 	return file, err
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
+//@author: [neophack](https://github.com/neophack)
 //@function: DeleteFile
 //@description: 删除文件记录
 //@param: file model.ExaFileUploadAndDownload
@@ -75,13 +75,13 @@ func (e *DetectionService) EditFileName(file model.DetectionFileUploadAndDownloa
 	return global.GVA_DB.Where("id = ?", file.ID).First(&fileFromDb).Update("name", file.Name).Error
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
+//@author: [neophack](https://github.com/neophack)
 //@function: GetFileRecordInfoList
 //@description: 分页获取数据
 //@param: info request.PageInfo
 //@return: list interface{}, total int64, err error
 
-func (e *DetectionService) GetFileRecordInfoList(info request.PageInfo) (list interface{}, total int64, err error) {
+func (e *DetectionService) GetFileRecordInfoList(info request.PageInfo) (fileLists []model.DetectionFileUploadAndDownload, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
 	keyword := info.Keyword
@@ -89,7 +89,7 @@ func (e *DetectionService) GetFileRecordInfoList(info request.PageInfo) (list in
 	//app := info.App
 	batchid := info.Batchid
 	db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
-	var fileLists []model.DetectionFileUploadAndDownload
+	//var fileLists []model.DetectionFileUploadAndDownload
 	if len(batchid) > 0 {
 		db = db.Where("batchid = '" + batchid + "'")
 	}
@@ -111,7 +111,7 @@ func (e *DetectionService) GetFileRecordInfoList(info request.PageInfo) (list in
 	return fileLists, total, err
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
+//@author: [neophack](https://github.com/neophack)
 //@function: UploadFile
 //@description: 根据配置文件判断是文件上传到本地或者七牛云
 //@param: header *multipart.FileHeader, noSave string
@@ -149,57 +149,11 @@ func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave strin
 	return
 }
 
-func (e *DetectionService) Dojob() {
-	maxJobs := int64(4) //set max jobs
-	for {
-		if global.GVA_DB == nil {
-			time.Sleep(time.Second * 10)
-			continue
-		}
-		break
-	}
-	for {
-		time.Sleep(time.Second * 5)
-		db := global.GVA_DB.Model(&model.DetectionFileBatch{})
-		var batchLists []model.DetectionFileBatch
-		db = db.Where("status = 'ready'")
-		err := db.Order("created_at desc").Find(&batchLists).Error
-		if err != nil {
-			global.GVA_DB.AutoMigrate(model.DetectionFileBatch{})
-			global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
-			continue
-		}
-		var workingCount int64
-
-		for ii := range batchLists {
-			app := batchLists[ii].App
-			batchid := batchLists[ii].Batchid
-			id := batchLists[ii].ID
-
-			for i := range local.GlobalConfig_.ModelConfig {
-				c := local.GlobalConfig_.ModelConfig[i]
-				if c.App == app {
-					//fmt.Print(batchid, c)
-					db = global.GVA_DB.Model(&model.DetectionFileBatch{})
-					err = db.Where("status = 'working'").Count(&workingCount).Error
-					if err != nil {
-						continue
-					}
-					fmt.Print("workingCount:", workingCount)
-					if workingCount < maxJobs {
-						go perception.RunBatch(c.ProgramPath, batchid, id)
-						time.Sleep(time.Second * 1)
-						i = 0
-					}
-
-				}
-
-			}
-
-		}
-	}
-
-}
+//@author: [neophack](https://github.com/neophack)
+//@function: GetBatchInfoList
+//@description: 分页获取数据
+//@param: info request.PageInfo
+//@return: list interface{}, total int64, err error
 
 func (e *DetectionService) GetBatchInfoList(info request.PageInfo) (list interface{}, total int64, err error) {
 	limit := info.PageSize
@@ -319,4 +273,61 @@ func (e *DetectionService) ChangeStatus(user string, app string, batchid string,
 	fmt.Println(formattedSize)
 	err = db.Update("FilesSize", formattedSize).Error
 	return err
+}
+
+func (e *DetectionService) Dojob() {
+	maxJobs := int64(4) //set max jobs
+	for {
+		if global.GVA_DB == nil {
+			time.Sleep(time.Second * 10)
+			continue
+		}
+		break
+	}
+	for {
+		time.Sleep(time.Second * 5)
+		db := global.GVA_DB.Model(&model.DetectionFileBatch{})
+		var batchLists []model.DetectionFileBatch
+		db = db.Where("status = 'ready'")
+		err := db.Order("created_at desc").Find(&batchLists).Error
+		if err != nil {
+			global.GVA_DB.AutoMigrate(model.DetectionFileBatch{})
+			global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
+			continue
+		}
+		var workingCount int64
+
+		for ii := range batchLists {
+			app := batchLists[ii].App
+			batchid := batchLists[ii].Batchid
+			id := batchLists[ii].ID
+
+			for i := range local.GlobalConfig_.ModelConfig {
+				c := local.GlobalConfig_.ModelConfig[i]
+				if c.App == app {
+					//fmt.Print(batchid, c)
+					db = global.GVA_DB.Model(&model.DetectionFileBatch{})
+					err = db.Where("status = 'working'").Count(&workingCount).Error
+					if err != nil {
+						continue
+					}
+					//fmt.Print("workingCount:", workingCount)
+					if workingCount < maxJobs {
+						var isworking = false
+						for j := range local.WorkingBatchs_ {
+							if batchid == local.WorkingBatchs_[j] {
+								isworking = true
+							}
+						}
+						if !isworking {
+							local.WorkingBatchs_ = append(local.WorkingBatchs_, batchid)
+							go perception.RunBatch(c.ProgramPath, batchid, id)
+						}
+						time.Sleep(time.Second * 1)
+						i = 0
+					}
+				}
+			}
+		}
+	}
 }

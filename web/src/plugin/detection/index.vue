@@ -120,7 +120,7 @@
             <el-button v-if="scope.row.status=='ready'" size="small" icon="VideoPause" type="primary" @click="onChangeStatus(scope.row)">暂停</el-button>
             <el-button v-else size="small" icon="VideoPlay" type="primary" @click="onChangeStatus(scope.row)">运行</el-button>
             <!--            <el-button icon="edit" type="primary" @click="downloadFile(scope.row)">编辑</el-button>-->
-            <el-button size="small" icon="download" type="primary" @click="downloadFile(scope.row)">下载</el-button>
+            <el-button size="small" icon="download" type="primary" @click="onDownloadFilesZip(scope.row)">下载</el-button>
             <el-button
               v-if="isAdmin"
               size="small"
@@ -292,7 +292,7 @@
 </template>
 
 <script setup>
-import { getFileList, deleteBatch, editFileName, newBatch, getBatchList, changeStatus } from './api/fileUploadAndDownload'
+import { getFileList, deleteBatch, editFileName, newBatch, getBatchList, changeStatus, downloadFilesZip } from './api/fileUploadAndDownload'
 import { downloadImage } from '@/utils/downloadImg'
 import { formatDate } from '@/utils/format'
 import WarningBar from '@/components/warningBar/warningBar.vue'
@@ -370,7 +370,7 @@ const onAddFiles = async(isfolder) => {
     input.setAttribute('directory', true)
     input.setAttribute('webkitdirectory', true)
   } else {
-      input.accept="."+extensions.value.replaceAll("|",",.",-1)
+    input.accept = '.' + extensions.value.replaceAll('|', ',.', -1)
     input.setAttribute('allowdirs', false)
     // input.setAttribute('directory', false)
     // input.setAttribute('webkitdirectory', false)
@@ -412,6 +412,13 @@ const onUploadFiles = async() => {
     for (var i = 0; i < files.value.length; i++) {
       all_size += files.value[i].size
       all_count += 1
+    }
+    if (all_count == 0) {
+      ElMessage({
+        type: 'error',
+        message: 'no file!',
+      })
+      return
     }
     const res = await newBatch({
       'own': userStore.userInfo.uuid,
@@ -487,7 +494,7 @@ const viewFiles = async(row, showres) => {
     user: userStore.userInfo.uuid,
     app: route.name,
     batchid: row.batchid,
-    ...search.value,
+    // ...search.value,
   })
   if (table.code === 0) {
     filetableData.value = table.data.list
@@ -527,7 +534,7 @@ const viewFiles = async(row, showres) => {
       options: {
         toolbar: true,
         url: 'src',
-        initialViewIndex: 1,
+        initialViewIndex: 0,
       },
       images: sourceImageURLs,
     })
@@ -621,6 +628,31 @@ const onDeleteBatch = async(row) => {
     })
 }
 
+const onDownloadFilesZip = async(row) => {
+  const url = path.value + '/detection/downloadFilesZip?batchid=' + row.batchid + '&result=1'
+  const link = document.createElement('a')
+  link.style.display = 'none'
+  link.href = url
+  // link.setAttribute('download', row.batchid + '_at_' + getCurrentTime() + '.zip')
+  document.body.appendChild(link)
+  link.click()
+  // const table = await downloadFilesZip({
+  //   user: userStore.userInfo.uuid,
+  //   app: route.name,
+  //   batchid: row.batchid,
+  // })
+  // if (table.status === 200) {
+  //   // filetableData.value = table.data.list
+  //   // filetotal.value = table.data.total
+  //   const url = window.URL.createObjectURL(new Blob([table.data]))
+  //   const link = document.createElement('a')
+  //   link.style.display = 'none'
+  //   link.href = url
+  //   link.setAttribute('download', row.batchid+".zip")
+  //   document.body.appendChild(link)
+  //   link.click()
+  // }
+}
 const downloadFile = (row) => {
   if (row.url.indexOf('http://') > -1 || row.url.indexOf('https://') > -1) {
     downloadImage(row.url, row.name)

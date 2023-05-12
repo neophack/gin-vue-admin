@@ -42,7 +42,7 @@ func InstallPlugin(Router *gin.Engine) {
 	))
 
 	data, err := ioutil.ReadFile("detection-config.json")
-	if nil != err  {
+	if nil != err {
 		log.Fatalln("ReadFile ERROR:", err)
 		return
 	} else {
@@ -56,6 +56,6 @@ func InstallPlugin(Router *gin.Engine) {
 		return
 	}
 
-	PluginInit(PrivateGroup, detection.CreateDetectionPlug(detectionConfig))
+	PluginInit(PublicGroup, detection.CreateDetectionPlug(detectionConfig))
 	Router.StaticFS(global.GVA_CONFIG.Local.TmpPath, http.Dir(global.GVA_CONFIG.Local.TmpPath))
 }

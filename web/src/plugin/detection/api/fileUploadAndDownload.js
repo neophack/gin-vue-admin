@@ -90,3 +90,11 @@ export const changeStatus = (data) => {
     data
   })
 }
+
+export const downloadFilesZip = (data) => {
+  return service({
+    url: '/detection/downloadFilesZip',
+    method: 'post',
+    data
+  })
+}
