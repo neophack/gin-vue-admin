@@ -79,8 +79,11 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "installPlugin", Name: "installPlugin", Component: "view/systemTools/installPlugin/index.vue", Sort: 1, Meta: Meta{Title: "插件安装", Icon: "box"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "autoPlug", Name: "autoPlug", Component: "view/systemTools/autoPlug/autoPlug.vue", Sort: 2, Meta: Meta{Title: "插件模板", Icon: "folder"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "plugin-email", Name: "plugin-email", Component: "plugin/email/view/index.vue", Sort: 3, Meta: Meta{Title: "邮件插件", Icon: "message"}},
+		{MenuLevel: 0, Hidden: false, ParentId: "16", Path: "chatTable", Name: "chatTable", Component: "view/chatgpt/chatTable.vue", Sort: 6, Meta: Meta{Title: "万用表格", Icon: "chat-dot-square"}},
+
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "plugin-detection", Name: "plugin-detection", Component: "plugin/detection/index.vue", Sort: 4, Meta: Meta{Title: "图像脱敏插件", Icon: "message"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "25", Path: "plugin-detection-video", Name: "plugin-detection-video", Component: "plugin/detection/index.vue", Sort: 5, Meta: Meta{Title: "视频脱敏插件", Icon: "message"}},
+		
 	}
 	if err = db.Create(&entities).Error; err != nil {
 		return ctx, errors.Wrap(err, SysBaseMenu{}.TableName()+"表数据初始化失败!")

@@ -152,6 +152,7 @@ func (i *initApi) InitializeData(ctx context.Context) (context.Context, error) {
 		{ApiGroup: "按钮权限", Method: "POST", Path: "/authorityBtn/getAuthorityBtn", Description: "获取已有按钮权限"},
 		{ApiGroup: "按钮权限", Method: "POST", Path: "/authorityBtn/canRemoveAuthorityBtn", Description: "删除按钮"},
 
+
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/upload", Description: "文件上传示例"},
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/deleteFile", Description: "删除文件"},
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/editFileName", Description: "文件名或者备注编辑"},
@@ -161,6 +162,12 @@ func (i *initApi) InitializeData(ctx context.Context) (context.Context, error) {
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/getBatchList", Description: "获取批次列表"},
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/changeStatus", Description: "改变批次状态"},
 		{ApiGroup: "detection", Method: "POST", Path: "/detection/deleteBatch", Description: "删除批次"},
+
+		{ApiGroup: "万用表格", Method: "POST", Path: "/chatGpt/getTable", Description: "通过gpt获取内容"},
+		{ApiGroup: "万用表格", Method: "POST", Path: "/chatGpt/createSK", Description: "录入sk"},
+		{ApiGroup: "万用表格", Method: "GET", Path: "/chatGpt/getSK", Description: "获取sk"},
+		{ApiGroup: "万用表格", Method: "DELETE", Path: "/chatGpt/deleteSK", Description: "删除sk"},
+
 	}
 	if err := db.Create(&entities).Error; err != nil {
 		return ctx, errors.Wrap(err, sysModel.SysApi{}.TableName()+"表数据初始化失败!")

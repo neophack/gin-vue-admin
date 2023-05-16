@@ -64,7 +64,6 @@ export default ({
       },
     },
     build: {
-      target: 'es2017',
       minify: 'terser', // 是否进行压缩,boolean | 'terser' | 'esbuild',默认使用terser
       manifest: false, // 是否产出manifest.json
       sourcemap: false, // 是否产出sourcemap.json
@@ -92,7 +91,9 @@ export default ({
   }
 
   if (NODE_ENV === 'development') {
-    config.plugins.push(fullImportPlugin())
+    config.plugins.push(
+      fullImportPlugin()
+    )
   } else {
     config.plugins.push(AutoImport({
       resolvers: [ElementPlusResolver()]
