@@ -27,27 +27,23 @@ type DetectionFileUploadAndDownload struct {
 	UrlDetection string `json:"url_detection" gorm:"comment:detection文件地址"` // 文件地址
 	Tag          string `json:"tag" gorm:"comment:文件标签"`                    // 文件标签
 	Key          string `json:"key" gorm:"comment:编号"`                      // 编号
-	//Own          string `json:"own" gorm:"comment:own"`
-	//App          string `json:"app" gorm:"comment:app"`
-	//Program      string `json:"program" gorm:"comment:program"`
-	//Label        string `json:"label" gorm:"comment:label"`
-	Size    string `json:"size" gorm:"comment:size"`
-	Reserve string `json:"reserve" gorm:"comment:reserve"` // 编号
+	Size         string `json:"size" gorm:"comment:size"`                   // 文件大小
+	Reserve      string `json:"reserve" gorm:"comment:reserve"`             // 保留字段
 }
 
 type DetectionFileBatch struct {
 	GVA_MODEL
 	Batchid        string `json:"batchid" gorm:"comment:batchid"`
-	Own            string `json:"own" gorm:"comment:Own"`
-	App            string `json:"app" gorm:"comment:app"`
-	FilesCount     int    `json:"files_count" gorm:"comment:files_count"`
-	FilesSize      string `json:"files_size" gorm:"comment:files_size"`
-	BackendProgram string `json:"backend_program" gorm:"comment:backend_program"`
-	Progress       string `json:"progress" gorm:"comment:progress"`
-	Status         string `json:"status" gorm:"comment:status"`
-	BatchRank      string `json:"batch_rank" gorm:"comment:batch_rank"`
-	OutLabel       string `json:"out_label" gorm:"comment:out_label"`
-	Reserve        string `json:"reserve" gorm:"comment:reserve"` // 编号
+	Own            string `json:"own" gorm:"comment:Own"`                         // 拥有者
+	App            string `json:"app" gorm:"comment:app"`                         // 应用
+	FilesCount     int    `json:"files_count" gorm:"comment:files_count"`         // 文件数量
+	FilesSize      string `json:"files_size" gorm:"comment:files_size"`           // 文件总大小
+	BackendProgram string `json:"backend_program" gorm:"comment:backend_program"` // 后端程序
+	Progress       string `json:"progress" gorm:"comment:progress"`               // 进度
+	Status         string `json:"status" gorm:"comment:status"`                   // 状态
+	BatchRank      string `json:"batch_rank" gorm:"comment:batch_rank"`           // 批次等级
+	OutLabel       string `json:"out_label" gorm:"comment:out_label"`             // 输出标签
+	Reserve        string `json:"reserve" gorm:"comment:reserve"`                 // 保留字段
 }
 
 func (DetectionFileUploadAndDownload) TableName() string {

@@ -17,14 +17,15 @@ import (
 type DetectionApi struct{}
 
 // UploadFile
-// @Tags      detection
-// @Summary   上传文件示例
-// @Security  ApiKeyAuth
-// @accept    multipart/form-data
-// @Produce   application/json
-// @Param     file  formData  file Header.User Header.App Header.Batchid  Header.Content-Length   true  "上传文件"
-// @Success   200   {object}  response.Response{msg=string}  "上传文件示例,返回接收文件失败&上传成功"
-// @Router    /detection/uploadFile [post]
+// @Tags detection
+// @Summary 上传文件
+// @Security ApiKeyAuth
+// @accept multipart/form-data
+// @Produce application/json
+// @Param   file   formData                                             true "上传文件"
+// @Param   noSave query     string                                     false "是否保存文件到本地"
+// @Success 200    {object}  response.Response{msg=string}              "上传文件示例,返回接收文件失败&上传成功"
+// @Router /detection/uploadFile [post]
 func (b *DetectionApi) UploadFile(c *gin.Context) {
 	var file model.DetectionFileUploadAndDownload
 	noSave := c.DefaultQuery("noSave", "0")
@@ -57,14 +58,14 @@ func (b *DetectionApi) UploadFile(c *gin.Context) {
 }
 
 // EditFileName
-// @Tags      detection
-// @Summary   编辑文件名或者备注
-// @Security  ApiKeyAuth
-// @accept    multipart/form-data
-// @Produce   application/json
-// @Param     file  model.DetectionFileUploadAndDownload           true  "编辑文件名或者备注"
-// @Success   200   {object}  response.Response{msg=string}  "编辑文件名或者备注,返回编辑失败&编辑成功"
-// @Router    /detection/editFileName [post]
+// @Tags detection
+// @Summary 编辑文件名或者备注
+// @Security ApiKeyAuth
+// @accept multipart/form-data
+// @Produce application/json
+// @Param   file model.DetectionFileUploadAndDownload true "编辑文件名或者备注"
+// @Success 200 {object} response.Response{msg=string} "编辑文件名或者备注,返回编辑失败&编辑成功"
+// @Router /detection/editFileName [post]
 func (b *DetectionApi) EditFileName(c *gin.Context) {
 	var file model.DetectionFileUploadAndDownload
 	err := c.ShouldBindJSON(&file)
@@ -82,13 +83,13 @@ func (b *DetectionApi) EditFileName(c *gin.Context) {
 }
 
 // DeleteFile
-// @Tags      detection
-// @Summary   删除文件
-// @Security  ApiKeyAuth
-// @Produce   application/json
-// @Param     data  body      model.ExaFileUploadAndDownload  true  "传入文件里面id即可"
-// @Success   200   {object}  response.Response{msg=string}     "删除文件"
-// @Router    /detection/deleteFile [post]
+// @Tags detection
+// @Summary 删除文件
+// @Security ApiKeyAuth
+// @Produce application/json
+// @Param data body model.ExaFileUploadAndDownload true "传入文件里面id即可"
+// @Success 200 {object} response.Response{msg=string} "删除文件"
+// @Router /detection/deleteFile [post]
 func (b *DetectionApi) DeleteFile(c *gin.Context) {
 	var file model.DetectionFileUploadAndDownload
 	err := c.ShouldBindJSON(&file)
@@ -105,14 +106,14 @@ func (b *DetectionApi) DeleteFile(c *gin.Context) {
 }
 
 // GetFileList
-// @Tags      detection
-// @Summary   分页文件列表
-// @Security  ApiKeyAuth
-// @accept    application/json
-// @Produce   application/json
-// @Param     data  body      request.PageInfo                                        true  "页码, 每页大小"
-// @Success   200   {object}  response.Response{data=response.PageResult,msg=string}  "分页文件列表,返回包括列表,总数,页码,每页数量"
-// @Router    /detection/getFileList [post]
+// @Tags detection
+// @Summary 分页文件列表
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body request.PageInfo true "页码, 每页大小"
+// @Success 200 {object} response.Response{data=response.PageResult,msg=string} "分页文件列表,返回包括列表,总数,页码,每页数量
+// @Router /detection/getFileList [post]
 func (b *DetectionApi) GetFileList(c *gin.Context) {
 	var pageInfo request.PageInfo
 	err := c.ShouldBindJSON(&pageInfo)
@@ -135,14 +136,14 @@ func (b *DetectionApi) GetFileList(c *gin.Context) {
 }
 
 // GetBatchList
-// @Tags      detection
-// @Summary   分页文件列表
-// @Security  ApiKeyAuth
-// @accept    application/json
-// @Produce   application/json
-// @Param     data  body      request.PageInfo                                        true  "页码, 每页大小"
-// @Success   200   {object}  response.Response{data=response.PageResult,msg=string}  "分页文件列表,返回包括列表,总数,页码,每页数量"
-// @Router    /detection/getBatchList [post]
+// @Tags detection
+// @Summary 分页获取文件批次列表
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body request.PageInfo true "页码, 每页大小"
+// @Success 200 {object} response.Response{data=response.PageResult,msg=string} "分页获取文件批次列表,返回包括列表,总数,页码,每页数量"
+// @Router /detection/getBatchList [post]
 func (b *DetectionApi) GetBatchList(c *gin.Context) {
 	var pageInfo request.PageInfo
 	err := c.ShouldBindJSON(&pageInfo)
@@ -165,14 +166,14 @@ func (b *DetectionApi) GetBatchList(c *gin.Context) {
 }
 
 // NewBatch
-// @Tags      detection
-// @Summary   NewBatch
-// @Security  ApiKeyAuth
-// @accept    application/json
-// @Produce   application/json
-// @Param     data  body      model.DetectionFileBatch                                        true  "DetectionFileBatch"
-// @Success   200   {object}  response.Response{data=model.DetectionBatchResponse,msg=string}  "NewBatch,返回err.Error()&model.DetectionBatchResponse"
-// @Router    /detection/newBatch [post]
+// @Tags detection
+// @Summary 新建文件批次
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body model.DetectionFileBatch true "DetectionFileBatch"
+// @Success 200 {object} response.Response "新建文件批次"
+// @Router /detection/newBatch [post]
 func (b *DetectionApi) NewBatch(c *gin.Context) {
 	var pageInfo model.DetectionFileBatch
 	err := c.ShouldBindJSON(&pageInfo)
@@ -195,6 +196,15 @@ func (b *DetectionApi) NewBatch(c *gin.Context) {
 	response.OkWithDetailed(model.DetectionBatchResponse{File: file}, "new成功", c)
 }
 
+// ChangeStatus
+// @Tags detection
+// @Summary 修改文件批次状态
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body model.DetectionFileBatch true "DetectionFileBatch"
+// @Success 200 {object} response.Response "修改文件批次状态"
+// @Router /detection/changeStatus [post]
 func (b *DetectionApi) ChangeStatus(c *gin.Context) {
 	var pageInfo model.DetectionFileBatch
 	err := c.ShouldBindJSON(&pageInfo)
@@ -216,6 +226,15 @@ func (b *DetectionApi) ChangeStatus(c *gin.Context) {
 	response.OkWithDetailed(gin.H{"data": "ok"}, "update成功", c)
 }
 
+// DeleteBatch
+// @Tags detection
+// @Summary 删除文件批次
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body model.DetectionFileBatch true "DetectionFileBatch"
+// @Success 200 {object} response.Response "删除文件批次"
+// @Router /detection/deleteBatch [post]
 func (b *DetectionApi) DeleteBatch(c *gin.Context) {
 	var pageInfo model.DetectionFileBatch
 	err := c.ShouldBindJSON(&pageInfo)
@@ -238,6 +257,16 @@ func (b *DetectionApi) DeleteBatch(c *gin.Context) {
 	response.OkWithMessage("删除成功", c)
 }
 
+// DownloadFilesZip
+// @Tags detection
+// @Summary 批量下载文件
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param batchid query string true "批次id"
+// @Param result query string true "结果类型"
+// @Success 200 {object} response.Response "批量下载文件"
+// @Router /detection/downloadFilesZip [get]
 func (b *DetectionApi) DownloadFilesZip(c *gin.Context) {
 	// 获取要下载的文件列表
 	batchid := c.Query("batchid")

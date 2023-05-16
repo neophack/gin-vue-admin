@@ -182,28 +182,30 @@ func (e *DetectionService) GetBatchInfoList(info request.PageInfo) (list interfa
 	return fileLists, total, err
 }
 
+// NewBatch 函数创建一个新的文件批次，包括用户、应用、批次ID、文件数量和文件大小，返回一个 DetectionFileBatch 结构体，并将其添加到数据库中。
 func (e *DetectionService) NewBatch(user string, app string, batchid string, filesCount int, filesSize string) (file model.DetectionFileBatch, err error) {
 	f := model.DetectionFileBatch{
-		Batchid:    batchid,
-		Own:        user,
-		App:        app,
-		FilesCount: filesCount,
-		FilesSize:  filesSize,
-		Status:     "uploading",
+		Batchid:    batchid,     // 批次ID
+		Own:        user,        // 用户名
+		App:        app,         // 应用名
+		FilesCount: filesCount,  // 文件数量
+		FilesSize:  filesSize,   // 文件大小
+		Status:     "uploading", // 批次状态
 	}
 
 	return f, global.GVA_DB.Create(&f).Error
 }
 
+// DeleteBatch 函数删除给定批次ID、应用和状态的文件批次及其关联的文件。它首先从数据库中删除文件批次，然后删除关联的文件，最后从数据库中删除这些文件。
 func (e *DetectionService) DeleteBatch(user string, app string, batchid string, status string) (err error) {
 	db := global.GVA_DB.Model(&model.DetectionFileBatch{})
-	err = db.Where("batchid = ?", batchid).Unscoped().Delete(&model.DetectionFileBatch{}, "app = ?", app).Error
+	err = db.Where("batchid = ?", batchid).Unscoped().Delete(&model.DetectionFileBatch{}, "app = ?", app).Error // 从数据库中删除文件批次
 	if err != nil {
 		return err
 	}
 	db2 := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
 	var fileLists []model.DetectionFileUploadAndDownload
-	err = db2.Where("batchid = '" + batchid + "'").Find(&fileLists).Error
+	err = db2.Where("batchid = '" + batchid + "'").Find(&fileLists).Error // 查找关联的文件
 	for i := range fileLists {
 		var fileFromDb model.DetectionFileUploadAndDownload
 		fileFromDb, err = e.FindFile(fileLists[i].ID)
@@ -211,22 +213,23 @@ func (e *DetectionService) DeleteBatch(user string, app string, batchid string, 
 			return err
 		}
 		oss := upload.NewOss()
-		if err = oss.DeleteFile(fileFromDb.Key); err != nil {
+		if err = oss.DeleteFile(fileFromDb.Key); err != nil { // 删除文件
 			return errors.New("文件删除失败")
 		}
 		if fileLists[i].UrlDetection != "" {
-			err = os.Remove(fileLists[i].UrlDetection)
+			err = os.Remove(fileLists[i].UrlDetection) // 删除文件
 			if err != nil {
 				return err
 			}
 		}
 
-		err = global.GVA_DB.Where("id = ?", fileLists[i].ID).Unscoped().Delete(&fileLists[i]).Error
+		err = global.GVA_DB.Where("id = ?", fileLists[i].ID).Unscoped().Delete(&fileLists[i]).Error // 从数据库中删除文件
 	}
 
 	return err
 }
 
+// formatSize 函数将给定的文件大小转换为易读的格式（例如，将字节转换为KB、MB、GB等）。
 func formatSize(size int64) string {
 	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"}
 	var i int
@@ -237,10 +240,11 @@ func formatSize(size int64) string {
 	return fmt.Sprintf("%.2f %s", floatSize, units[i])
 }
 
+// ChangeStatus 函数更新文件批次的状态，并计算文件总数和大小。
 func (e *DetectionService) ChangeStatus(user string, app string, batchid string, status string) (err error) {
 	db := global.GVA_DB.Model(&model.DetectionFileBatch{})
 	db = db.Where("batchid = ?", batchid).Where("app = ?", app)
-	err = db.Update("status", status).Error
+	err = db.Update("status", status).Error // 更新批次状态
 	if err != nil {
 		return err
 	}
@@ -248,35 +252,36 @@ func (e *DetectionService) ChangeStatus(user string, app string, batchid string,
 
 	var total int64
 	db2 = db2.Where("batchid = '" + batchid + "'")
-	err = db2.Count(&total).Error
+	err = db2.Count(&total).Error // 计算文件总数
 	if err != nil {
 		return err
 	}
 	var fileLists []model.DetectionFileUploadAndDownload
 	var fileSize int64
-	err = db2.Find(&fileLists).Error
+	err = db2.Find(&fileLists).Error // 查找文件列表
 	for i := range fileLists {
 		number_int, err := strconv.Atoi(fileLists[i].Size)
 		if err != nil {
 			return err
 		}
-		fileSize += int64(number_int)
+		fileSize += int64(number_int) // 计算文件大小
 	}
 	if err != nil {
 		return err
 	}
-	err = db.Update("FilesCount", total).Error
+	err = db.Update("FilesCount", total).Error // 更新文件总数
 	if err != nil {
 		return err
 	}
 	formattedSize := formatSize(fileSize)
 	fmt.Println(formattedSize)
-	err = db.Update("FilesSize", formattedSize).Error
+	err = db.Update("FilesSize", formattedSize).Error // 更新文件大小
 	return err
 }
 
+// Dojob 函数处理文件批次的任务。它从数据库中查找状态为“ready”的文件批次，然后启动处理程序对这些文件进行处理。
 func (e *DetectionService) Dojob() {
-	maxJobs := int64(4) //set max jobs
+	maxJobs := int64(4) // 设置最大任务数
 	for {
 		if global.GVA_DB == nil {
 			time.Sleep(time.Second * 10)
@@ -289,7 +294,7 @@ func (e *DetectionService) Dojob() {
 		db := global.GVA_DB.Model(&model.DetectionFileBatch{})
 		var batchLists []model.DetectionFileBatch
 		db = db.Where("status = 'ready'")
-		err := db.Order("created_at desc").Find(&batchLists).Error
+		err := db.Order("created_at desc").Find(&batchLists).Error // 查找状态为“ready”的文件批次
 		if err != nil {
 			global.GVA_DB.AutoMigrate(model.DetectionFileBatch{})
 			global.GVA_DB.AutoMigrate(model.DetectionFileUploadAndDownload{})
@@ -305,13 +310,11 @@ func (e *DetectionService) Dojob() {
 			for i := range local.GlobalConfig_.ModelConfig {
 				c := local.GlobalConfig_.ModelConfig[i]
 				if c.App == app {
-					//fmt.Print(batchid, c)
 					db = global.GVA_DB.Model(&model.DetectionFileBatch{})
-					err = db.Where("status = 'working'").Count(&workingCount).Error
+					err = db.Where("status = 'working'").Count(&workingCount).Error // 查找状态为“working”的文件批次
 					if err != nil {
 						continue
 					}
-					//fmt.Print("workingCount:", workingCount)
 					if workingCount < maxJobs {
 						var isworking = false
 						for j := range local.WorkingBatchs_ {
@@ -321,7 +324,7 @@ func (e *DetectionService) Dojob() {
 						}
 						if !isworking {
 							local.WorkingBatchs_ = append(local.WorkingBatchs_, batchid)
-							go perception.RunBatch(c.ProgramPath, batchid, id)
+							go perception.RunBatch(c.ProgramPath, batchid, id) // 启动处理程序对文件进行处理
 						}
 						time.Sleep(time.Second * 1)
 						i = 0
