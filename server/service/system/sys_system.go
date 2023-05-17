@@ -55,6 +55,9 @@ func (systemConfigService *SystemConfigService) GetServerInfo() (server *utils.S
 		global.GVA_LOG.Error("func utils.InitDisk() Failed", zap.String("err", err.Error()))
 		return &s, err
 	}
-
+	if s.Gpu, err = utils.InitGpu(); err != nil {
+		global.GVA_LOG.Error("func utils.InitGPU() Failed", zap.String("err", err.Error()))
+		return &s, err
+	}
 	return &s, nil
 }
