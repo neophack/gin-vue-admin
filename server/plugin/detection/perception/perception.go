@@ -93,14 +93,18 @@ func RunBatch(programPath string, batchid string, id uint) {
 	fmt.Println("The file", f.Name(), "has been created.")
 
 	// 启动检测程序，并传递命令行参数
-	cmd := exec.Command(programPath, "-i", f.Name(), "-o", global.GVA_CONFIG.Local.TmpPath, "--gpu", "--imlist")
+	args := strings.Split(programPath, " ")
+	args = append(args, "-i", f.Name(), "-o", global.GVA_CONFIG.Local.TmpPath, "--imlist")
+	fmt.Println(args)
+	cmd := exec.Command(args[0], args[1:]...)
+	//cmd := exec.Command(programPath, "-i", f.Name(), "-o", global.GVA_CONFIG.Local.TmpPath, "--gpu", "--imlist")
 	output, err := cmd.StdoutPipe()
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	if err := cmd.Start(); err != nil {
-		panic(err)
+		return
 	}
 
 	// 获取检测程序的进程 ID
@@ -118,21 +122,21 @@ func RunBatch(programPath string, batchid string, id uint) {
 				progress, err := strconv.ParseFloat(progressStr, 8)
 
 				if err != nil {
-					panic(err)
+					continue
 				}
 
 				// 更新文件批次的进度
 				fmt.Printf("%s Progress: %.1f%%\r", batchid, progress)
 				err = db2.Update("progress", fmt.Sprintf("%.1f", progress)).Error
 				if err != nil {
-					return
+					continue
 				}
 
 				// 如果检测完成，更新文件批次的状态，并将检测结果存入数据库
 				if progress > 99.99 {
 					err = db2.Update("status", "finish").Error
 					if err != nil {
-						return
+						continue
 					}
 
 					for i := range fileLists {
@@ -142,7 +146,7 @@ func RunBatch(programPath string, batchid string, id uint) {
 							db := global.GVA_DB.Model(&model.DetectionFileUploadAndDownload{})
 							err = db.Where("id = ?", fileLists[i].ID).Update("url_detection", newurl).Error
 							if err != nil {
-								return
+								continue
 							}
 						}
 					}
@@ -150,7 +154,7 @@ func RunBatch(programPath string, batchid string, id uint) {
 					// 如果检测未完成，更新文件批次的状态为 working
 					err = db2.Update("status", "working").Error
 					if err != nil {
-						return
+						continue
 					}
 				}
 			}
@@ -164,11 +168,17 @@ func RunBatch(programPath string, batchid string, id uint) {
 		if err != nil {
 			return
 		}
+		removeBatchFromRunningList(batchid)
 		return
 	}
 	fmt.Println("finish!")
 
 	// 从正在运行的文件批次列表中删除当前文件批次
+	removeBatchFromRunningList(batchid)
+
+}
+
+func removeBatchFromRunningList(batchid string) {
 	newSlice := []string{}
 	for _, s := range local.WorkingBatchs_ {
 		if s != batchid {

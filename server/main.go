@@ -2,6 +2,7 @@ package main
 
 import (
 	"go.uber.org/zap"
+	"os"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/core"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -37,6 +38,8 @@ func main() {
 		// 程序结束前关闭数据库链接
 		db, _ := global.GVA_DB.DB()
 		defer db.Close()
+	} else {
+		os.Exit(-1)
 	}
 	core.RunWindowsServer()
 }

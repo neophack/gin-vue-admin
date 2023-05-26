@@ -79,6 +79,8 @@ type GpuInfo struct {
 	MemoryTotal     int    `json:"memory_total"`
 	UtilizationGpu  int    `json:"utilization_gpu"`
 	PersistanceMode bool   `json:"persistance_mode"`
+	Temperature     int    `json:"temperature"`
+	Fanspeed        int    `json:"fanspeed"`
 }
 
 type Process struct {
@@ -197,7 +199,16 @@ func NewGpuInfoFromLine(line string) GpuInfo {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	persistanceMode := values[6]
+	temperature, err := strconv.Atoi(values[7])
+	if err != nil {
+		log.Fatal(err)
+	}
+	fanspeed, err := strconv.Atoi(values[8])
+	if err != nil {
+		log.Fatal(err)
+	}
 	return GpuInfo{
 		Index:           index,
 		GpuUUID:         gpuUUID,
@@ -206,6 +217,8 @@ func NewGpuInfoFromLine(line string) GpuInfo {
 		MemoryTotal:     memoryTotal,
 		UtilizationGpu:  utilizationGpu,
 		PersistanceMode: persistanceMode == "Enabled",
+		Temperature:     temperature,
+		Fanspeed:        fanspeed,
 	}
 }
 
@@ -232,7 +245,7 @@ func RetrieveGpus() map[string]GpuInfo {
 	out, err := exec.Command(
 		"/usr/bin/env", "nvidia-smi",
 		"--format=csv,noheader,nounits",
-		"--query-gpu=index,gpu_uuid,name,memory.used,memory.total,utilization.gpu,persistence_mode").Output()
+		"--query-gpu=index,gpu_uuid,name,memory.used,memory.total,utilization.gpu,persistence_mode,temperature.gpu,fan.speed").Output()
 
 	if err != nil {
 		//log.Fatal(err)

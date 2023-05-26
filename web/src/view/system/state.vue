@@ -139,7 +139,7 @@
     </el-row>
     <el-row :gutter="15" class="system_state">
       <el-col :span="12">
-        <el-card v-if="state.gpu" class="card_item">
+        <el-card v-if="state.gpu" class="card_item" :body-style="{ height: '180px', 'overflow-y': 'scroll' }">
           <template #header>
             <div>GPU</div>
           </template>
@@ -147,10 +147,10 @@
             <el-col v-for="(gpu, index) in state.gpu.gpu_infos" :key="gpu.index" :gutter="10">
               <el-row :gutter="10" tag="b">GPU {{ gpu.name }}:</el-row>
               <el-row :gutter="10">
-                <el-col>
+                <el-col :span="12">
                   <p class="card-text">Memory Used: {{ gpu.memory_used }} / {{ gpu.memory_total }} MB</p>
                 </el-col>
-                <el-col>
+                <el-col :span="12">
                   <el-progress
                     type="line"
                     :percentage="(gpu.memory_used / gpu.memory_total * 100).toFixed(0)"
@@ -160,13 +160,28 @@
 
               </el-row>
               <el-row :gutter="10">
-                <el-col>
-                  <el-col>
-                    <p class="card-text">GPU Utilization: </p>
-                  </el-col>
+                <el-col :span="12">
+                  <p class="card-text">GPU Utilization: </p>
+                </el-col>
+                <el-col :span="12">
                   <el-progress
                     type="line"
                     :percentage="gpu.utilization_gpu"
+                    :color="colors"
+                  />
+                </el-col>
+              </el-row>
+              <el-row :gutter="10">
+                <p class="card-text">Temperature: {{ gpu.temperature }}C</p>
+              </el-row>
+              <el-row :gutter="10">
+                <el-col :span="12">
+                  <p class="card-text">Fan Speed: </p>
+                </el-col>
+                <el-col :span="12">
+                  <el-progress
+                    type="line"
+                    :percentage="gpu.fanspeed"
                     :color="colors"
                   />
                 </el-col>

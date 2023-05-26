@@ -250,15 +250,15 @@
         </vxe-table>
       </span>
     </el-dialog>
-    <el-dialog v-model="viewFileVisible" title="Video Player" width="1200px">
+    <el-dialog v-model="viewFileVisible" title="Video Player" width="95%" >
       <el-container>
-        <el-aside width="300px">
+        <el-aside width="20%">
           <vxe-table
             ref="xTable"
             keep-source
             :tooltip-config="{}"
             :data="filetableData"
-            height="500"
+            height="600"
             :show-header="true"
             :mouse-config="{selected: true}"
             :keyboard-config="{isArrow: true, isEnter: true, isChecked: true}"
@@ -273,15 +273,16 @@
             </vxe-column>
           </vxe-table>
         </el-aside>
-        <el-main>
+        <el-main ref="main">
           <warning-bar :title="current_file" />
           <video-player
             :src="current_fileurl"
             controls
             :loop="true"
             :volume="0.6"
-            width="800"
-          />
+            style="width: 100%;height: 90%;margin:0 auto;box-shadow:5px 5px 8px #888888"
+            notSupportedMessage='此视频暂无法播放，请稍后再试'
+            />
         </el-main>
       </el-container>
 
@@ -304,11 +305,10 @@ import { useRoute } from 'vue-router'
 import FileUpload from 'vue-upload-component'
 import { api as viewerApi } from 'v-viewer'
 
+// 定义常量和变量
 const path = ref(import.meta.env.VITE_BASE_API)
-
 const imageUrl = ref('')
 const imageCommon = ref('')
-
 const files = ref([])
 const page = ref(1)
 const total = ref(0)
@@ -323,7 +323,6 @@ const filetotal = ref(0)
 const showRes = ref(false)
 const isVideo = ref(route.name.includes('video'))
 const lastRoute = ref('')
-
 const dialogImageUrl = ref('')
 const dialogVisible = ref(false)
 const uploadVisible = ref(false)
@@ -331,8 +330,7 @@ const viewFileVisible = ref(false)
 const current_file = ref('')
 const current_fileurl = ref('')
 const progress0 = ref(0)
-const isAdmin = userStore.userInfo.authorityId == '888'
-
+const isAdmin = true //userStore.userInfo.authorityId == '888'
 const postAction = path.value + '/detection/upload'
 const headers = {
   'x-token': userStore.token,
@@ -355,11 +353,17 @@ const handleCurrentChange = (val) => {
   page.value = val
   getTableData()
 }
+
+// 获取组件实例
 const currentInstance = getCurrentInstance()
 
+// 添加文件或文件夹
 const onAddFiles = async(isfolder) => {
   if (!currentInstance.refs.upload.features.directory) {
-    this.alert('Your browser does not support')
+    ElMessage({
+      type: 'error',
+      message: '您的浏览器不支持',
+    })
     return
   }
   const input = document.createElement('input')

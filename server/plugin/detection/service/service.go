@@ -125,7 +125,7 @@ func (e *DetectionService) UploadFile(header *multipart.FileHeader, noSave strin
 		global.GVA_LOG.Error("function os.MkdirAll() Filed", zap.Any("err", mkdirErr.Error()))
 	}
 	if uploadErr != nil {
-		panic(err)
+		return
 	}
 	if noSave == "0" {
 
@@ -281,7 +281,7 @@ func (e *DetectionService) ChangeStatus(user string, app string, batchid string,
 
 // Dojob 函数处理文件批次的任务。它从数据库中查找状态为“ready”的文件批次，然后启动处理程序对这些文件进行处理。
 func (e *DetectionService) Dojob() {
-	maxJobs := int64(4) // 设置最大任务数
+	maxJobs := int64(3) // 设置最大任务数
 	for {
 		if global.GVA_DB == nil {
 			time.Sleep(time.Second * 10)
